@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import './base.css';
+
+@theme {
+  --color-muted-foreground: #64748b;
+}
+
+#app {
+  min-height: 100vh;
+}
