@@ -2,7 +2,6 @@
   <aside
     class="w-64 bg-sidebar text-white min-h-screen flex flex-col shadow-xl select-none shrink-0"
   >
-    <!-- Brand / Logo -->
     <div class="p-5 border-b border-sidebar-divider flex items-center gap-3">
       <div
         class="h-10 w-10 rounded-btn bg-primary p-1.5 flex items-center justify-center shrink-0"
@@ -16,7 +15,6 @@
       <p class="text-xs font-bold tracking-wider">QUẢN LÝ MƯỢN SÁCH</p>
     </div>
 
-    <!-- User Badge -->
     <div
       class="p-4 mx-3 my-3 bg-sidebar-user border border-sidebar-user-border flex items-center gap-3"
     >
@@ -39,13 +37,12 @@
       </div>
     </div>
 
-    <!-- Navigation -->
     <nav class="py-2 flex-1 px-3 space-y-1 overflow-y-auto">
       <!-- Menu dành riêng cho Độc Giả -->
       <template v-if="auth.isDocGia">
         <RouterLink
           to="/reader"
-          class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-hover hover:text-white transition"
+          class="block px-3 py-2.5 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-hover hover:text-white"
           active-class="bg-primary text-white font-semibold"
         >
           <span>Cổng Dịch Vụ Độc Giả</span>
@@ -60,7 +57,7 @@
             class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-sidebar-hover hover:text-white transition"
             active-class="bg-primary text-white font-semibold"
           >
-            <span>Dashboard</span>
+            <span>Trang chủ</span>
           </RouterLink>
           <RouterLink
             to="/nhanvien"

@@ -1,7 +1,7 @@
 <template>
   <div class="space-y-6 font-sans text-text-main">
     <!-- Header -->
-    <h1 class="text-2xl font-extrabold tracking-tight pb-2">Dashboard</h1>
+    <h1 class="text-2xl font-extrabold tracking-tight pb-2">Trang Chủ</h1>
 
     <!-- Loading skeleton -->
     <div

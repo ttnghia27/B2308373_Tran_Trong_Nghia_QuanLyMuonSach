@@ -8,8 +8,7 @@ const startOfDay = (date) =>
 const getLateDays = (phieu) => {
   if (!phieu.NGAYHENTRA) return 0;
   const endDate = phieu.NGAYTRA ? new Date(phieu.NGAYTRA) : new Date();
-  const diffMs =
-    startOfDay(endDate) - startOfDay(new Date(phieu.NGAYHENTRA));
+  const diffMs = startOfDay(endDate) - startOfDay(new Date(phieu.NGAYHENTRA));
   return Math.max(0, Math.ceil(diffMs / MILLISECONDS_PER_DAY));
 };
 
@@ -67,7 +66,11 @@ const getThuTheoThoiGian = async (req, res) => {
       const dateValue = req.query.date
         ? new Date(`${req.query.date}T00:00:00`)
         : new Date();
-      start = new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
+      start = new Date(
+        dateValue.getFullYear(),
+        dateValue.getMonth(),
+        dateValue.getDate(),
+      );
       end = new Date(start);
       end.setDate(end.getDate() + 1);
       bucketCount = 24;

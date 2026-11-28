@@ -15,7 +15,6 @@ const authenticate = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Kiểm tra nếu là token của Độc Giả
     if (decoded.role === "DocGia") {
       const docGia = await DocGia.findById(decoded.id).select("-PASSWORD");
       if (!docGia) {
@@ -28,7 +27,6 @@ const authenticate = async (req, res, next) => {
       return next();
     }
 
-    // Mặc định là Nhân Viên
     const nhanVien = await NhanVien.findById(decoded.id).select("-PASSWORD");
 
     if (!nhanVien) {
@@ -108,10 +106,10 @@ const authorizeDocGia = (req, res, next) => {
   next();
 };
 
-// Đăng ký tài khoản cho Độc Giả
 const registerDocGia = async (req, res) => {
   try {
-    const { HOLOT, TEN, NGAYSINH, PHAI, DIACHI, DIENTHOAI, PASSWORD } = req.body;
+    const { HOLOT, TEN, NGAYSINH, PHAI, DIACHI, DIENTHOAI, PASSWORD } =
+      req.body;
     let { MADOCGIA } = req.body;
 
     if (!HOLOT || !TEN || !NGAYSINH || !DIACHI || !DIENTHOAI || !PASSWORD) {
@@ -120,7 +118,6 @@ const registerDocGia = async (req, res) => {
       });
     }
 
-    // Kiểm tra số điện thoại
     const existingPhone = await DocGia.findOne({ DIENTHOAI: DIENTHOAI.trim() });
     if (existingPhone) {
       return res.status(400).json({
@@ -128,7 +125,6 @@ const registerDocGia = async (req, res) => {
       });
     }
 
-    // Tự sinh MADOCGIA nếu chưa có
     if (!MADOCGIA || !MADOCGIA.trim()) {
       let isUnique = false;
       while (!isUnique) {
@@ -145,7 +141,6 @@ const registerDocGia = async (req, res) => {
       }
     }
 
-    // Mật khẩu lưu trực tiếp không cần hash
     const plainPassword = PASSWORD.trim();
 
     const newDocGia = new DocGia({
@@ -177,7 +172,6 @@ const registerDocGia = async (req, res) => {
   }
 };
 
-// Đăng nhập cho Độc Giả
 const loginDocGia = async (req, res) => {
   try {
     const username = (req.body.MADOCGIA || req.body.DIENTHOAI || "").trim();
@@ -190,10 +184,7 @@ const loginDocGia = async (req, res) => {
     }
 
     const docGia = await DocGia.findOne({
-      $or: [
-        { MADOCGIA: username.toUpperCase() },
-        { DIENTHOAI: username },
-      ],
+      $or: [{ MADOCGIA: username.toUpperCase() }, { DIENTHOAI: username }],
     });
 
     if (!docGia) {
@@ -204,14 +195,16 @@ const loginDocGia = async (req, res) => {
 
     if (docGia.TRANGTHAI === "KhoaThe") {
       return res.status(403).json({
-        message: "Thẻ độc giả của bạn hiện đang bị khóa. Vui lòng liên hệ thủ thư.",
+        message:
+          "Thẻ độc giả của bạn hiện đang bị khóa. Vui lòng liên hệ thủ thư.",
       });
     }
 
-    // So sánh mật khẩu trực tiếp (hỗ trợ cả hash cũ nếu có)
     const isMatch =
       docGia.PASSWORD === password ||
-      (docGia.PASSWORD && docGia.PASSWORD.startsWith("$2") && bcrypt.compareSync(password, docGia.PASSWORD));
+      (docGia.PASSWORD &&
+        docGia.PASSWORD.startsWith("$2") &&
+        bcrypt.compareSync(password, docGia.PASSWORD));
 
     if (!isMatch) {
       return res.status(401).json({

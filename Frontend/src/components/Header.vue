@@ -41,7 +41,7 @@ const handleLogout = () => {
 const currentTitle = computed(() => {
   switch (route.name) {
     case "AdminDashboard":
-      return "Dashboard Thống Kê";
+      return "Trang Chủ Thống Kê";
     case "Sach":
       return "Quản Lý Sách";
     case "DocGia":

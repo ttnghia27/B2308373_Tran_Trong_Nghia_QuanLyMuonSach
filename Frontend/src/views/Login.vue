@@ -6,7 +6,6 @@
       <div
         class="rounded-card border border-border-base bg-bg-card p-8 shadow-card"
       >
-        <!-- Logo & Header -->
         <div class="flex items-center justify-center gap-3.5 mb-8 pb-2">
           <div
             class="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-btn p-1.5 shadow-md"
@@ -19,7 +18,6 @@
           </div>
           <h1 class="text-2xl font-bold text-text-main">QUẢN LÝ MƯỢN SÁCH</h1>
         </div>
-        <!-- Role Tabs -->
         <div
           class="grid grid-cols-2 gap-1.5 p-1 bg-bg-input rounded-input mb-6"
         >
@@ -40,7 +38,6 @@
         </div>
 
         <form @submit.prevent="handleLogin" class="space-y-4">
-          <!-- Identifier: MSNV or Mã Độc Giả -->
           <div>
             <label
               for="login-id"
@@ -68,7 +65,6 @@
             </div>
           </div>
 
-          <!-- Password -->
           <div>
             <label
               for="password"
@@ -101,7 +97,6 @@
             </div>
           </div>
 
-          <!-- Error Alert -->
           <div
             v-if="errorMessage"
             class="p-3 rounded-input bg-danger-bg border border-danger-border text-danger text-xs"
@@ -109,7 +104,6 @@
             {{ errorMessage }}
           </div>
 
-          <!-- Submit Button -->
           <button
             type="submit"
             :disabled="isLoading"
@@ -120,7 +114,6 @@
           </button>
         </form>
 
-        <!-- Register Link for Readers -->
         <div
           v-if="activeTab === 'reader'"
           class="mt-6 pt-4 border-t border-border-subtle text-center text-xs"

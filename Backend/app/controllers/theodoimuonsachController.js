@@ -109,10 +109,14 @@ const getMyLoans = async (req, res) => {
   try {
     const madocgia = req.DocGia?.MADOCGIA || req.query.madocgia;
     if (!madocgia) {
-      return res.status(400).json({ message: "Không xác định được mã độc giả." });
+      return res
+        .status(400)
+        .json({ message: "Không xác định được mã độc giả." });
     }
 
-    const loans = await TheoDoiMuonSach.find({ MADOCGIA: madocgia }).sort({ createdAt: -1 });
+    const loans = await TheoDoiMuonSach.find({ MADOCGIA: madocgia }).sort({
+      createdAt: -1,
+    });
     const result = await attachRelatedInfo(loans, [
       "TENSACH",
       "DONGIA",
@@ -152,9 +156,12 @@ const getTheoDoiMuonSachById = async (req, res) => {
 // 1. Độc giả gửi yêu cầu mượn, chờ nhân viên duyệt
 const yeuCauMuonSach = async (req, res) => {
   try {
-    const MADOCGIA = (req.DocGia?.MADOCGIA || req.body.MADOCGIA || "").trim().toUpperCase();
+    const MADOCGIA = (req.DocGia?.MADOCGIA || req.body.MADOCGIA || "")
+      .trim()
+      .toUpperCase();
     const MASACH = (req.body.MASACH || "").trim().toUpperCase();
-    const soNgayMuon = req.body.SONGAYMUON === undefined ? 14 : Number(req.body.SONGAYMUON);
+    const soNgayMuon =
+      req.body.SONGAYMUON === undefined ? 14 : Number(req.body.SONGAYMUON);
 
     if (!MADOCGIA || !MASACH) {
       return res.status(400).json({
@@ -169,7 +176,9 @@ const yeuCauMuonSach = async (req, res) => {
     // Ràng buộc 1: Độc giả phải tồn tại và không bị khóa thẻ
     const docGia = await DocGia.findOne({ MADOCGIA });
     if (!docGia) {
-      return res.status(404).json({ message: "Không tìm thấy thông tin độc giả." });
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy thông tin độc giả." });
     }
     if (docGia.TRANGTHAI === "KhoaThe") {
       return res.status(400).json({
@@ -195,7 +204,9 @@ const yeuCauMuonSach = async (req, res) => {
     // Ràng buộc 3: Sách phải tồn tại và còn số lượng (SOQUYEN > 0)
     const sach = await Sach.findOne({ MASACH: exactCodeFilter(MASACH) });
     if (!sach) {
-      return res.status(404).json({ message: "Không tìm thấy sách trong kho." });
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy sách trong kho." });
     }
     if (sach.SOQUYEN <= 0) {
       return res.status(400).json({
@@ -222,7 +233,8 @@ const yeuCauMuonSach = async (req, res) => {
     });
 
     return res.status(201).json({
-      message: "Gửi yêu cầu mượn sách thành công. Số lượng sách sẽ được trừ khi nhân viên phê duyệt.",
+      message:
+        "Gửi yêu cầu mượn sách thành công. Số lượng sách sẽ được trừ khi nhân viên phê duyệt.",
       phieu,
     });
   } catch (error) {
@@ -240,7 +252,8 @@ const duyetMuonSach = async (req, res) => {
 
     if (!phieu) {
       return res.status(404).json({
-        message: "Không tìm thấy yêu cầu mượn hoặc yêu cầu đã được xử lý trước đó.",
+        message:
+          "Không tìm thấy yêu cầu mượn hoặc yêu cầu đã được xử lý trước đó.",
       });
     }
 
@@ -301,7 +314,8 @@ const duyetMuonSach = async (req, res) => {
         );
       }
       return res.status(404).json({
-        message: "Không tìm thấy yêu cầu mượn hoặc yêu cầu đã được xử lý trước đó.",
+        message:
+          "Không tìm thấy yêu cầu mượn hoặc yêu cầu đã được xử lý trước đó.",
       });
     }
 
@@ -388,7 +402,9 @@ const muonSach = async (req, res) => {
     if (phieuDangMuon) {
       return res
         .status(400)
-        .json({ message: "Độc giả đang mượn hoặc đang chờ duyệt cuốn sách này." });
+        .json({
+          message: "Độc giả đang mượn hoặc đang chờ duyệt cuốn sách này.",
+        });
     }
 
     const sach = await Sach.findOne({ MASACH: exactCodeFilter(MASACH) });
@@ -435,10 +451,7 @@ const muonSach = async (req, res) => {
         TIENPHAT: 0,
       });
     } catch (error) {
-      await Sach.updateOne(
-        { MASACH: sach.MASACH },
-        { $inc: { SOQUYEN: 1 } },
-      );
+      await Sach.updateOne({ MASACH: sach.MASACH }, { $inc: { SOQUYEN: 1 } });
       throw error;
     }
 
@@ -540,7 +553,8 @@ const traSach = async (req, res) => {
         msg += ` (Đã cộng tiền phạt hư hại sách: ${tienPhatHuHai.toLocaleString("vi-VN")} đ).`;
       }
     } else {
-      msg = "Trả sách nguyên vẹn đúng hạn thành công. Hoàn trả toàn bộ tiền cọc cho độc giả.";
+      msg =
+        "Trả sách nguyên vẹn đúng hạn thành công. Hoàn trả toàn bộ tiền cọc cho độc giả.";
     }
 
     return res.json({

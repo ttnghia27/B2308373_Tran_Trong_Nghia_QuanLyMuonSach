@@ -20,7 +20,6 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-// Phục vụ ảnh bìa sách
 app.use("/uploads", express.static(path.join(__dirname, "app/uploads")));
 
 app.use("/api/nhaxuatban", NhaXuatBanRoutes);

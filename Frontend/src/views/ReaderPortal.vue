@@ -2,9 +2,12 @@
   <div class="space-y-6 font-sans text-text-main">
     <!-- Header Banner -->
     <div
-      class="rounded-card bg-primary/10 border border-border-base p-6 flex flex-col sm:flex-row sm:items-center justify-between"
+      class="rounded-card bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-border-base p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
     >
       <div>
+        <h1 class="text-2xl font-black tracking-tight mt-1">
+          Xin chào, {{ auth.displayName || "Bạn đọc" }}!
+        </h1>
         <p class="text-xs text-text-muted mt-0.5">
           Mã thẻ độc giả:
           <strong class="text-primary">{{
@@ -25,6 +28,7 @@
               : 'bg-bg-card hover:bg-bg-input text-text-label border border-border-base'
           "
         >
+          <i class="fa-solid fa-book-open"></i>
           <span>Kho Sách Thư Viện</span>
         </button>
 
@@ -38,6 +42,7 @@
               : 'bg-bg-card hover:bg-bg-input text-text-label border border-border-base'
           "
         >
+          <i class="fa-solid fa-clock-rotate-left"></i>
           <span>Phiếu Mượn Của Tôi</span>
           <span
             v-if="pendingCount > 0"
@@ -79,7 +84,7 @@
     <!-- TAB 1: KHO SÁCH & GỬI YÊU CẦU MƯỢN -->
     <section v-if="activeMainTab === 'books'" class="space-y-4">
       <!-- Thanh tìm kiếm & lọc thể loại -->
-      <div class="flex flex-col sm:flex-row gap-2.5 py-3">
+      <div class="flex flex-col sm:flex-row gap-2.5">
         <div class="relative flex-1">
           <i
             class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-xs"
@@ -174,12 +179,10 @@
               {{ book.TENSACH }}
             </h3>
             <p class="text-xs text-text-muted mt-1 flex items-center gap-1.5">
-              <span
-                >Nguồn góc/ tác giả:
-                {{
-                  book["NGUONGOC/TACGIA"] || book.TACGIA || "Đang cập nhật"
-                }}</span
-              >
+              <i class="fa-solid fa-user-pen text-[10px]"></i>
+              <span>{{
+                book["NGUONGOC/TACGIA"] || book.TACGIA || "Đang cập nhật"
+              }}</span>
             </p>
             <p class="text-[11px] text-text-muted mt-0.5">
               Năm XB: {{ book.NAMXUATBAN || "-" }} | Mã: {{ book.MASACH }}
@@ -195,7 +198,7 @@
                 class="block text-[10px] uppercase tracking-wider text-text-muted"
                 >Tiền cọc</span
               >
-              <span class="text-xs font-bold">
+              <span class="text-xs font-bold text-primary">
                 {{ formatCurrency(book.TIENCOC || book.DONGIA || 50000) }}
               </span>
             </div>
@@ -211,6 +214,7 @@
                   : 'bg-bg-input text-text-muted cursor-not-allowed'
               "
             >
+              <i class="fa-solid fa-hand-holding-hand"></i>
               <span>{{ book.SOQUYEN > 0 ? "Mượn sách" : "Hết sách" }}</span>
             </button>
           </div>
@@ -219,7 +223,7 @@
     </section>
 
     <!-- TAB 2: PHIẾU MƯỢN CỦA TÔI -->
-    <section v-else class="space-y-4 py-3">
+    <section v-else class="space-y-4">
       <!-- Bộ lọc trạng thái phiếu mượn của độc giả -->
       <div class="flex flex-wrap gap-2 border-b border-border-subtle pb-3">
         <button
@@ -252,6 +256,7 @@
         v-if="isLoansLoading"
         class="py-12 text-center text-text-muted text-xs"
       >
+        <i class="fa-solid fa-spinner fa-spin text-lg mb-2 block"></i>
         Đang tải lịch sử mượn sách...
       </div>
 
@@ -280,6 +285,7 @@
                 <th class="py-3 px-3.5">Tiền Cọc</th>
                 <th class="py-3 px-3.5">Tiền Phạt</th>
                 <th class="py-3 px-3.5">Trạng Thái</th>
+                <th class="py-3 px-3.5 text-right">Thao Tác</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border-base">
@@ -311,7 +317,7 @@
 
                 <!-- Tiền phạt tổng cộng -->
                 <td class="py-3 px-3.5">
-                  <span v-if="item.TIENPHAT > 0">
+                  <span v-if="item.TIENPHAT > 0" class="text-danger font-bold">
                     {{ formatCurrency(item.TIENPHAT) }}
                   </span>
                   <span v-else class="text-text-muted"> 0 đ </span>
@@ -319,7 +325,10 @@
 
                 <!-- Trạng thái -->
                 <td class="py-3 px-3.5">
-                  <span>
+                  <span
+                    class="px-2 py-0.5 rounded text-[11px] font-bold inline-block"
+                    :class="getStatusClass(item)"
+                  >
                     {{ item.TRANGTHAI }}
                   </span>
                 </td>
@@ -484,7 +493,8 @@
           class="flex items-center justify-between pb-3 border-b border-border-subtle"
         >
           <h3 class="font-bold text-base flex items-center gap-2">
-            Đăng Ký Mượn Sách
+            <i class="fa-solid fa-hand-holding-hand text-primary"></i> Đăng Ký
+            Mượn Sách
           </h3>
           <button
             @click="requestingBook = null"
@@ -501,7 +511,10 @@
             Tên sách: <strong>{{ requestingBook.TENSACH }}</strong>
           </p>
           <p>
-            Mã sách: <strong>{{ requestingBook.MASACH }}</strong>
+            Mã sách:
+            <span class="text-primary font-bold">{{
+              requestingBook.MASACH
+            }}</span>
           </p>
           <p>
             Tác giả:
@@ -511,7 +524,7 @@
           </p>
           <p>
             Tiền cọc quy định:
-            <strong>{{
+            <strong class="text-primary">{{
               formatCurrency(
                 requestingBook.TIENCOC || requestingBook.DONGIA || 50000,
               )
@@ -519,12 +532,14 @@
           </p>
           <p>
             Số quyển khả dụng:
-            <strong>{{ requestingBook.SOQUYEN }} quyển</strong>
+            <span class="text-emerald-600 font-bold"
+              >{{ requestingBook.SOQUYEN }} quyển</span
+            >
           </p>
         </div>
 
         <div>
-          <label class="py-2 block text-xs font-bold text-text-label mb-1.5">
+          <label class="block text-xs font-bold text-text-label mb-1.5">
             Thời hạn mượn:
           </label>
           <select
@@ -532,17 +547,19 @@
             class="w-full p-2.5 rounded-input border border-border-input bg-bg-input text-xs outline-none focus:border-primary"
           >
             <option :value="7">7 ngày</option>
-            <option :value="14">14 ngày</option>
+            <option :value="14">14 ngày (Mặc định)</option>
             <option :value="21">21 ngày</option>
             <option :value="30">30 ngày</option>
           </select>
           <p class="text-[11px] text-text-muted mt-1.5 italic">
-            * Lưu ý: Chờ thủ thư <strong>"phê duyệt"</strong> để nhận sách.
+            * Lưu ý: Khi gửi yêu cầu, số lượng sách sẽ được trừ trực tiếp và
+            phiếu mượn ở trạng thái <strong>"Chờ duyệt"</strong>. Vui lòng đợi
+            thủ thư phê duyệt để nhận sách.
           </p>
         </div>
 
         <div
-          class="flex items-center justify-end gap-2 pt-2 border-border-subtle"
+          class="flex items-center justify-end gap-2 pt-2 border-t border-border-subtle"
         >
           <button
             type="button"
@@ -618,6 +635,25 @@ const isOverdue = (item) =>
   item.TRANGTHAI !== "Từ Chối" &&
   Boolean(item.NGAYHENTRA) &&
   startOfDay(item.NGAYHENTRA) < startOfDay(new Date());
+
+const getStatusClass = (item) => {
+  switch (item.TRANGTHAI) {
+    case "Chờ Duyệt":
+      return "bg-amber-500/15 text-amber-600 border border-amber-500/30";
+    case "Đang Mượn":
+      return isOverdue(item)
+        ? "bg-red-500/15 text-red-600 border border-red-500/30"
+        : "bg-blue-500/15 text-blue-600 border border-blue-500/30";
+    case "Trễ Hạn":
+      return "bg-red-500/15 text-red-600 border border-red-500/30";
+    case "Đã Trả":
+      return "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30";
+    case "Từ Chối":
+      return "bg-gray-500/15 text-gray-500 border border-gray-500/30";
+    default:
+      return "bg-bg-input text-text-label";
+  }
+};
 
 // --- Computed: Map Thể loại ---
 const categoryMap = computed(() => {
@@ -758,15 +794,16 @@ const confirmBorrowRequest = async () => {
       MASACH: requestingBook.value.MASACH,
       SONGAYMUON: borrowDuration.value,
     });
+
     alertMessage.value = {
       type: "success",
       text:
         res.message ||
-        "Đã gửi yêu cầu mượn sách thành công. Vui lòng chờ nhân viên phê duyệt.",
+        "Đã gửi yêu cầu mượn sách thành công! Đã trừ 1 quyển tồn kho.",
     };
     requestingBook.value = null;
 
-    // Làm mới danh sách sách và phiếu mượn
+    // Cập nhật lại số lượng sách và danh sách phiếu mượn
     await Promise.all([fetchBooks(), fetchMyLoans()]);
     // Chuyển sang tab phiếu mượn để bạn đọc theo dõi
     activeMainTab.value = "loans";
