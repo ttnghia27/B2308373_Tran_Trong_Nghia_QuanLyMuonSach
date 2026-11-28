@@ -4,13 +4,14 @@ const TheoDoiMuonSachSchema = new mongoose.Schema(
   {
     MADOCGIA: { type: String, required: true, trim: true },
     MASACH: { type: String, required: true, trim: true },
+    MSNV: { type: String, default: null, trim: true },
     NGAYMUON: { type: Date, required: true, default: Date.now },
     NGAYHENTRA: { type: Date, required: true },
     NGAYTRA: { type: Date, default: null },
     TRANGTHAI: {
       type: String,
       required: true,
-      enum: ["Đang Mượn", "Đã Trả", "Trễ Hạn"],
+      enum: ["Chờ Duyệt", "Đang Mượn", "Đã Trả", "Trễ Hạn", "Từ Chối"],
       default: "Đang Mượn",
       trim: true,
     },

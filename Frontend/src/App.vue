@@ -29,6 +29,10 @@ import Header from "@/components/Header.vue";
 const route = useRoute();
 
 const isAuthPage = computed(() => {
-  return route.name === "Login" || route.name === "NotFound";
+  return (
+    route.name === "Login" ||
+    route.name === "Register" ||
+    route.name === "NotFound"
+  );
 });
 </script>

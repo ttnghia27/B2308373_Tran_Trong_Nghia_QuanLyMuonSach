@@ -59,7 +59,14 @@ const getAllTheoDoiMuonSach = async (req, res) => {
     const filter = {};
 
     if (trangthai) {
-      filter.TRANGTHAI = trangthai;
+      const mapTrangThai = {
+        ChoDuyet: "Chờ Duyệt",
+        DangMuon: "Đang Mượn",
+        DaTra: "Đã Trả",
+        TreHan: "Trễ Hạn",
+        TuChoi: "Từ Chối",
+      };
+      filter.TRANGTHAI = mapTrangThai[trangthai] || trangthai;
     }
     if (madocgia) {
       filter.MADOCGIA = { $regex: madocgia, $options: "i" };
@@ -80,6 +87,7 @@ const getAllTheoDoiMuonSach = async (req, res) => {
       "DONGIA",
       "TIENCOC",
       "HINHANH",
+      "MATL",
     ]);
     res.status(200).json(result);
   } catch (error) {
@@ -88,6 +96,29 @@ const getAllTheoDoiMuonSach = async (req, res) => {
       error,
       "Lỗi không thể lấy danh sách mượn sách.",
     );
+  }
+};
+
+// Độc giả lấy danh sách phiếu mượn của chính mình
+const getMyLoans = async (req, res) => {
+  try {
+    const madocgia = req.DocGia?.MADOCGIA || req.query.madocgia;
+    if (!madocgia) {
+      return res.status(400).json({ message: "Không xác định được mã độc giả." });
+    }
+
+    const loans = await TheoDoiMuonSach.find({ MADOCGIA: madocgia }).sort({ createdAt: -1 });
+    const result = await attachRelatedInfo(loans, [
+      "TENSACH",
+      "DONGIA",
+      "TIENCOC",
+      "HINHANH",
+      "NGUONGOC/TACGIA",
+      "MATL",
+    ]);
+    res.status(200).json(result);
+  } catch (error) {
+    return sendServerError(res, error, "Lỗi không thể lấy lịch sử mượn sách.");
   }
 };
 
@@ -100,7 +131,7 @@ const getTheoDoiMuonSachById = async (req, res) => {
 
     const [result] = await attachRelatedInfo(
       [TDMS],
-      ["TENSACH", "DONGIA", "TIENCOC"],
+      ["TENSACH", "DONGIA", "TIENCOC", "MATL"],
       false,
     );
     res.status(200).json(result);
@@ -113,19 +144,431 @@ const getTheoDoiMuonSachById = async (req, res) => {
   }
 };
 
-const createTheoDoiMuonSach = async (req, res) => {
+// 1. Độc giả GỬI YÊU CẦU MƯỢN SÁCH: Trừ ngay số lượng sách trong kho (SOQUYEN -= 1)
+const yeuCauMuonSach = async (req, res) => {
   try {
-    const { MADOCGIA, MASACH, NGAYMUON } = req.body;
+    const MADOCGIA = (req.DocGia?.MADOCGIA || req.body.MADOCGIA || "").trim().toUpperCase();
+    const MASACH = (req.body.MASACH || "").trim().toUpperCase();
+    const soNgayMuon = req.body.SONGAYMUON === undefined ? 14 : Number(req.body.SONGAYMUON);
+
+    if (!MADOCGIA || !MASACH) {
+      return res.status(400).json({
+        message: "Vui lòng cung cấp Mã độc giả và Mã sách.",
+      });
+    }
+
+    if (!Number.isInteger(soNgayMuon) || soNgayMuon <= 0) {
+      return res.status(400).json({ message: "Thời hạn mượn không hợp lệ." });
+    }
+
+    // Ràng buộc 1: Độc giả phải tồn tại và không bị khóa thẻ
+    const docGia = await DocGia.findOne({ MADOCGIA });
+    if (!docGia) {
+      return res.status(404).json({ message: "Không tìm thấy thông tin độc giả." });
+    }
+    if (docGia.TRANGTHAI === "KhoaThe") {
+      return res.status(400).json({
+        message: "Thẻ độc giả hiện đang bị khóa. Không thể yêu cầu mượn sách.",
+      });
+    }
+
+    // Ràng buộc 2: Không được mượn trùng cuốn sách đang chờ duyệt hoặc chưa trả
     const existingTDMS = await TheoDoiMuonSach.findOne({
       MADOCGIA,
       MASACH,
+      TRANGTHAI: { $in: ["Chờ Duyệt", "Đang Mượn", "Trễ Hạn"] },
+    });
+
+    if (existingTDMS) {
+      const msg =
+        existingTDMS.TRANGTHAI === "Chờ Duyệt"
+          ? "Bạn đã gửi yêu cầu mượn cuốn sách này và đang chờ thủ thư duyệt."
+          : "Bạn đang mượn cuốn sách này và chưa hoàn trả.";
+      return res.status(400).json({ message: msg });
+    }
+
+    // Ràng buộc 3: Sách phải tồn tại và còn số lượng (SOQUYEN > 0)
+    const sach = await Sach.findOne({ MASACH });
+    if (!sach) {
+      return res.status(404).json({ message: "Không tìm thấy sách trong kho." });
+    }
+    if (sach.SOQUYEN <= 0) {
+      return res.status(400).json({
+        message: `Sách '${sach.TENSACH}' hiện đã hết số lượng khả dụng trong kho.`,
+      });
+    }
+
+    // RÀNG BUỘC QUAN TRỌNG: Độc giả mượn sách thì trừ ngay số lượng sách trong kho
+    const tonKho = await Sach.updateOne(
+      { MASACH, SOQUYEN: { $gt: 0 } },
+      { $inc: { SOQUYEN: -1 } },
+    );
+    if (tonKho.modifiedCount !== 1) {
+      return res.status(400).json({
+        message: `Sách '${sach.TENSACH}' vừa hết số lượng khả dụng.`,
+      });
+    }
+
+    const tienCoc = Number(sach.TIENCOC) || Number(sach.DONGIA) || 50000;
+    const ngayMuon = new Date();
+    const ngayHenTra = new Date(ngayMuon);
+    ngayHenTra.setDate(ngayHenTra.getDate() + soNgayMuon);
+    ngayHenTra.setHours(23, 59, 59, 999);
+
+    let phieu;
+    try {
+      phieu = await TheoDoiMuonSach.create({
+        MADOCGIA,
+        MASACH,
+        MSNV: null,
+        NGAYMUON: ngayMuon,
+        NGAYHENTRA: ngayHenTra,
+        TRANGTHAI: "Chờ Duyệt",
+        TIENCOC: tienCoc,
+        TIENPHAT: 0,
+      });
+    } catch (createErr) {
+      // Rollback hoàn lại số lượng sách nếu lưu phiếu lỗi
+      await Sach.updateOne({ MASACH }, { $inc: { SOQUYEN: 1 } });
+      throw createErr;
+    }
+
+    return res.status(201).json({
+      message: "Gửi yêu cầu mượn sách thành công! Đã trừ số lượng tồn kho. Vui lòng chờ thủ thư phê duyệt.",
+      phieu,
+    });
+  } catch (error) {
+    return sendServerError(res, error, "Không thể gửi yêu cầu mượn sách.");
+  }
+};
+
+// 2. Thủ thư / Admin DUYỆT YÊU CẦU MƯỢN SÁCH
+const duyetMuonSach = async (req, res) => {
+  try {
+    const phieu = await TheoDoiMuonSach.findOne({
+      _id: req.params.id,
+      TRANGTHAI: "Chờ Duyệt",
+    });
+
+    if (!phieu) {
+      return res.status(404).json({
+        message: "Không tìm thấy yêu cầu mượn hoặc yêu cầu đã được xử lý trước đó.",
+      });
+    }
+
+    // Vì số lượng sách đã được trừ lúc độc giả gửi yêu cầu mượn,
+    // khi duyệt chỉ cần chuyển trạng thái sang "Đang Mượn" và cập nhật ngày
+    const ngayMuon = new Date();
+    const diffDays =
+      Math.round(
+        (new Date(phieu.NGAYHENTRA) - new Date(phieu.NGAYMUON)) /
+          MILLISECONDS_PER_DAY,
+      ) || 14;
+    const ngayHenTra = new Date(ngayMuon);
+    ngayHenTra.setDate(ngayHenTra.getDate() + Math.max(1, diffDays));
+    ngayHenTra.setHours(23, 59, 59, 999);
+
+    phieu.TRANGTHAI = "Đang Mượn";
+    phieu.MSNV = req.NhanVien?.MSNV || null;
+    phieu.NGAYMUON = ngayMuon;
+    phieu.NGAYHENTRA = ngayHenTra;
+    await phieu.save();
+
+    return res.status(200).json({
+      message: "Duyệt yêu cầu mượn sách thành công.",
+      phieu,
+    });
+  } catch (error) {
+    return sendServerError(res, error, "Không thể duyệt yêu cầu mượn sách.");
+  }
+};
+
+// 3. Thủ thư / Admin TỪ CHỐI YÊU CẦU MƯỢN SÁCH: Hoàn lại số lượng sách vào kho (+1)
+const tuChoiMuonSach = async (req, res) => {
+  try {
+    const phieu = await TheoDoiMuonSach.findOne({
+      _id: req.params.id,
+      TRANGTHAI: "Chờ Duyệt",
+    });
+
+    if (!phieu) {
+      return res.status(404).json({
+        message: "Không tìm thấy yêu cầu mượn hoặc yêu cầu đã được xử lý.",
+      });
+    }
+
+    // Hoàn lại 1 quyển vào kho sách vì từ chối
+    await Sach.updateOne({ MASACH: phieu.MASACH }, { $inc: { SOQUYEN: 1 } });
+
+    phieu.TRANGTHAI = "Từ Chối";
+    phieu.MSNV = req.NhanVien?.MSNV || null;
+    await phieu.save();
+
+    return res.status(200).json({
+      message: "Đã từ chối yêu cầu mượn sách và hoàn lại số lượng tồn kho.",
+      phieu,
+    });
+  } catch (error) {
+    return sendServerError(res, error, "Không thể từ chối yêu cầu mượn.");
+  }
+};
+
+// 4. Lập phiếu mượn trực tiếp tại quầy bởi Thủ thư/Admin: Trừ số lượng sách (SOQUYEN -= 1)
+const muonSach = async (req, res) => {
+  try {
+    const MADOCGIA = req.body.MADOCGIA?.trim().toUpperCase();
+    const MASACH = req.body.MASACH?.trim().toUpperCase();
+    const soNgayMuon =
+      req.body.SONGAYMUON === undefined ? 14 : Number(req.body.SONGAYMUON);
+
+    if (!MADOCGIA || !MASACH) {
+      return res.status(400).json({
+        message: "Vui lòng cung cấp Mã độc giả và Mã sách.",
+      });
+    }
+    if (!Number.isInteger(soNgayMuon) || soNgayMuon <= 0) {
+      return res.status(400).json({ message: "Thời hạn mượn không hợp lệ." });
+    }
+
+    const docGia = await DocGia.findOne({ MADOCGIA });
+    if (!docGia) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy độc giả trong hệ thống." });
+    }
+    if (docGia.TRANGTHAI === false || docGia.TRANGTHAI === "KhoaThe") {
+      return res.status(400).json({
+        message: "Thẻ độc giả hiện đang bị khóa hoặc không hoạt động.",
+      });
+    }
+
+    const phieuDangMuon = await TheoDoiMuonSach.findOne({
+      MADOCGIA,
+      MASACH,
+      TRANGTHAI: { $in: ["Đang Mượn", "Trễ Hạn", "Chờ Duyệt"] },
+    });
+    if (phieuDangMuon) {
+      return res
+        .status(400)
+        .json({ message: "Độc giả đang mượn hoặc đang chờ duyệt cuốn sách này." });
+    }
+
+    const sach = await Sach.findOne({ MASACH });
+    if (!sach) {
+      return res
+        .status(404)
+        .json({ message: "Không tìm thấy sách trong kho." });
+    }
+    if (sach.SOQUYEN <= 0) {
+      return res
+        .status(400)
+        .json({ message: `Sách '${sach.TENSACH}' đã hết quyển trong kho.` });
+    }
+
+    const tienCoc = Number(sach.TIENCOC) || Number(sach.DONGIA) || 50000;
+    const ngayMuon = new Date();
+    const ngayHenTra = new Date(ngayMuon);
+    ngayHenTra.setDate(ngayHenTra.getDate() + soNgayMuon);
+    ngayHenTra.setHours(23, 59, 59, 999);
+
+    // Trừ 1 quyển trong kho sách
+    const tonKho = await Sach.updateOne(
+      { MASACH, SOQUYEN: { $gt: 0 } },
+      { $inc: { SOQUYEN: -1 } },
+    );
+    if (tonKho.modifiedCount !== 1) {
+      return res
+        .status(400)
+        .json({ message: "Sách không tồn tại hoặc vừa hết." });
+    }
+
+    let phieu;
+    try {
+      phieu = await TheoDoiMuonSach.create({
+        MADOCGIA,
+        MASACH,
+        MSNV: req.NhanVien?.MSNV || null,
+        NGAYMUON: ngayMuon,
+        NGAYHENTRA: ngayHenTra,
+        TRANGTHAI: "Đang Mượn",
+        TIENCOC: tienCoc,
+        TIENPHAT: 0,
+      });
+    } catch (error) {
+      await Sach.updateOne({ MASACH }, { $inc: { SOQUYEN: 1 } });
+      throw error;
+    }
+
+    return res.status(201).json({
+      message: "Lập phiếu mượn sách thành công (Đã trừ 1 quyển tồn kho).",
+      phieu,
+    });
+  } catch (error) {
+    return sendServerError(res, error, "Không thể tạo phiếu mượn.");
+  }
+};
+
+// 5. Trả sách & CỘNG THÊM TIỀN PHẠT HƯ SÁCH VÀO TIENPHAT
+const traSach = async (req, res) => {
+  try {
+    const phieu = await TheoDoiMuonSach.findOne({
+      _id: req.params.id,
       TRANGTHAI: { $in: ["Đang Mượn", "Trễ Hạn"] },
+      NGAYTRA: null,
+    });
+
+    if (!phieu) {
+      const exists = await TheoDoiMuonSach.exists({ _id: req.params.id });
+      if (exists) {
+        return res
+          .status(409)
+          .json({ message: "Phiếu này đã được trả trước đó." });
+      }
+      return res.status(404).json({ message: "Không tìm thấy phiếu mượn." });
+    }
+
+    const ngayTra = new Date();
+    const diffMs = startOfDay(ngayTra) - startOfDay(new Date(phieu.NGAYHENTRA));
+    const ngayTre = Math.max(0, Math.ceil(diffMs / MILLISECONDS_PER_DAY));
+
+    const tienCoc = Number(phieu.TIENCOC) || 0;
+    let tienPhatTre = 0;
+    let tichThuCoc = false;
+
+    // Quy tắc: Nếu trễ quá 30 ngày -> Tịch thu cọc
+    if (ngayTre > 30) {
+      tichThuCoc = true;
+      tienPhatTre = tienCoc > 0 ? tienCoc : 100000;
+    } else if (ngayTre > 0) {
+      tienPhatTre = ngayTre * TIEN_PHAT_MOI_NGAY;
+    }
+
+    // Tiền phạt do làm hư hại sách (nếu có truyền từ body)
+    const tienPhatHuHai = Math.max(0, Number(req.body.TIENPHATHUHAI) || 0);
+
+    // QUY TẮC MỚI: Cộng dồn cả tiền phạt trễ hạn và tiền phạt hư hại sách vào trường TIENPHAT
+    const tongTienPhat = tienPhatTre + tienPhatHuHai;
+
+    const phieuDaTra = await TheoDoiMuonSach.findOneAndUpdate(
+      {
+        _id: phieu._id,
+        TRANGTHAI: { $in: ["Đang Mượn", "Trễ Hạn"] },
+        NGAYTRA: null,
+      },
+      {
+        $set: {
+          NGAYTRA: ngayTra,
+          TRANGTHAI: "Đã Trả",
+          TIENPHAT: tongTienPhat, // Cộng dồn tiền phạt hư sách vào TIENPHAT
+        },
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!phieuDaTra) {
+      return res.status(409).json({ message: "Phiếu đang được xử lý trả." });
+    }
+
+    // Hoàn trả 1 quyển sách vào kho
+    await Sach.updateOne({ MASACH: phieu.MASACH }, { $inc: { SOQUYEN: 1 } });
+
+    // Tạo thông điệp chi tiết
+    let msg = "Trả sách thành công.";
+    if (tichThuCoc) {
+      msg = `Trả sách thành công (Lưu ý: Quá 30 ngày trễ - Đã tịch thu toàn bộ tiền cọc: ${tienCoc.toLocaleString("vi-VN")} đ).`;
+      if (tienPhatHuHai > 0) {
+        msg += ` Đã cộng thêm tiền phạt hư hại sách: ${tienPhatHuHai.toLocaleString("vi-VN")} đ vào tổng tiền phạt.`;
+      }
+    } else if (tongTienPhat > 0) {
+      msg = `Trả sách thành công. Tổng tiền phạt: ${tongTienPhat.toLocaleString("vi-VN")} đ`;
+      if (tienPhatHuHai > 0 && tienPhatTre > 0) {
+        msg += ` (Trễ hạn: ${tienPhatTre.toLocaleString("vi-VN")} đ, Hư hại sách: ${tienPhatHuHai.toLocaleString("vi-VN")} đ).`;
+      } else if (tienPhatHuHai > 0) {
+        msg += ` (Đã cộng tiền phạt hư hại sách: ${tienPhatHuHai.toLocaleString("vi-VN")} đ).`;
+      }
+    } else {
+      msg = "Trả sách nguyên vẹn đúng hạn thành công. Hoàn trả toàn bộ tiền cọc cho độc giả.";
+    }
+
+    return res.json({
+      message: msg,
+      TIENPHAT: tongTienPhat,
+      TIENCOC: tienCoc,
+      phieu: phieuDaTra,
+    });
+  } catch (error) {
+    return sendServerError(res, error, "Không thể trả sách.");
+  }
+};
+
+const getSachTreHan = async (req, res) => {
+  try {
+    const homNay = new Date();
+    homNay.setHours(0, 0, 0, 0);
+
+    // Tự động chuyển các phiếu quá hạn sang trạng thái "Trễ Hạn"
+    await TheoDoiMuonSach.updateMany(
+      {
+        TRANGTHAI: "Đang Mượn",
+        NGAYHENTRA: { $lt: homNay },
+        NGAYTRA: null,
+      },
+      { $set: { TRANGTHAI: "Trễ Hạn" } },
+    );
+
+    const phieuTreHan = await TheoDoiMuonSach.find({
+      TRANGTHAI: "Trễ Hạn",
+      NGAYTRA: null,
+    });
+
+    for (const phieu of phieuTreHan) {
+      const diffMs =
+        startOfDay(new Date()) - startOfDay(new Date(phieu.NGAYHENTRA));
+      const ngayTre = Math.max(0, Math.ceil(diffMs / MILLISECONDS_PER_DAY));
+      const tienCoc = Number(phieu.TIENCOC) || 0;
+
+      let tienPhat = 0;
+      if (ngayTre > 30) {
+        tienPhat = tienCoc > 0 ? tienCoc : 100000;
+      } else {
+        tienPhat = ngayTre * TIEN_PHAT_MOI_NGAY;
+      }
+
+      await TheoDoiMuonSach.updateOne(
+        { _id: phieu._id },
+        {
+          $set: {
+            TIENPHAT: tienPhat,
+          },
+        },
+      );
+    }
+
+    const danhSach = await TheoDoiMuonSach.find({
+      TRANGTHAI: "Trễ Hạn",
+      NGAYTRA: null,
+    }).sort({ NGAYHENTRA: 1 });
+
+    const result = await attachRelatedInfo(danhSach, ["TENSACH", "TIENCOC"]);
+    return res.json(result);
+  } catch (error) {
+    return sendServerError(res, error, "Không thể lấy danh sách sách trễ hạn.");
+  }
+};
+
+const createTheoDoiMuonSach = async (req, res) => {
+  try {
+    const { MADOCGIA, MASACH } = req.body;
+    const existingTDMS = await TheoDoiMuonSach.findOne({
+      MADOCGIA,
+      MASACH,
+      TRANGTHAI: { $in: ["Đang Mượn", "Trễ Hạn", "Chờ Duyệt"] },
     });
 
     if (existingTDMS) {
       return res
         .status(400)
-        .json({ message: "Độc giả đang mượn sách này chưa trả." });
+        .json({ message: "Độc giả đang mượn hoặc chờ duyệt cuốn sách này." });
     }
 
     const newTDMS = new TheoDoiMuonSach(req.body);
@@ -167,14 +610,14 @@ const deleteTheoDoiMuonSach = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy phiếu mượn." });
     }
 
-    // Nếu phiếu đang mượn mà bị xóa -> hoàn trả lại tồn kho sách
-    if (TDMS.TRANGTHAI === "Đang Mượn" || TDMS.TRANGTHAI === "Trễ Hạn") {
+    // Nếu phiếu đang mượn hoặc chờ duyệt mà bị xóa -> hoàn trả lại tồn kho sách
+    if (["Đang Mượn", "Trễ Hạn", "Chờ Duyệt"].includes(TDMS.TRANGTHAI)) {
       await Sach.updateOne({ MASACH: TDMS.MASACH }, { $inc: { SOQUYEN: 1 } });
     }
 
     await TheoDoiMuonSach.findByIdAndDelete(req.params.id);
 
-    res.status(200).json({ message: "Xóa thành công phiếu mượn." });
+    res.status(200).json({ message: "Xóa thành công phiếu mượn và hoàn trả tồn kho." });
   } catch (error) {
     return sendServerError(res, error, "Lỗi không thể xóa phiếu mượn.");
   }
@@ -191,231 +634,13 @@ const deleteAllTheoDoiMuonSach = async (req, res) => {
   }
 };
 
-const muonSach = async (req, res) => {
-  try {
-    const MADOCGIA = req.body.MADOCGIA?.trim();
-    const MASACH = req.body.MASACH?.trim();
-    const soNgayMuon =
-      req.body.SONGAYMUON === undefined ? 14 : Number(req.body.SONGAYMUON);
-
-    if (!MADOCGIA || !MASACH) {
-      return res.status(400).json({
-        message: "Vui lòng cung cấp Mã độc giả và Mã sách.",
-      });
-    }
-    if (!Number.isInteger(soNgayMuon) || soNgayMuon <= 0) {
-      return res.status(400).json({ message: "Thời hạn mượn không hợp lệ." });
-    }
-
-    const docGia = await DocGia.findOne({ MADOCGIA });
-    if (!docGia) {
-      return res
-        .status(404)
-        .json({ message: "Không tìm thấy độc giả trong hệ thống." });
-    }
-    if (docGia.TRANGTHAI === false || docGia.TRANGTHAI === "KhoaThe") {
-      return res.status(400).json({
-        message: "Thẻ độc giả hiện đang bị khóa hoặc không hoạt động.",
-      });
-    }
-
-    const phieuDangMuon = await TheoDoiMuonSach.findOne({
-      MADOCGIA,
-      MASACH,
-      TRANGTHAI: { $in: ["Đang Mượn", "Trễ Hạn"] },
-    });
-    if (phieuDangMuon) {
-      return res
-        .status(400)
-        .json({ message: "Độc giả đang mượn cuốn sách này chưa trả." });
-    }
-
-    const sach = await Sach.findOne({ MASACH });
-    if (!sach) {
-      return res
-        .status(404)
-        .json({ message: "Không tìm thấy sách trong kho." });
-    }
-    if (sach.SOQUYEN <= 0) {
-      return res
-        .status(400)
-        .json({ message: `Sách '${sach.TENSACH}' đã hết quyển trong kho.` });
-    }
-
-    // Tiền cọc sách: ưu tiên TIENCOC của sách, nếu không thì lấy DONGIA hoặc mặc định 50.000đ
-    const tienCoc = Number(sach.TIENCOC) || Number(sach.DONGIA) || 50000;
-
-    const ngayMuon = new Date();
-    const ngayHenTra = new Date(ngayMuon);
-    ngayHenTra.setDate(ngayHenTra.getDate() + soNgayMuon);
-    ngayHenTra.setHours(23, 59, 59, 999);
-
-    const tonKho = await Sach.updateOne(
-      { MASACH, SOQUYEN: { $gt: 0 } },
-      { $inc: { SOQUYEN: -1 } },
-    );
-    if (tonKho.modifiedCount !== 1) {
-      return res
-        .status(400)
-        .json({ message: "Sách không tồn tại hoặc vừa hết." });
-    }
-
-    let phieu;
-    try {
-      phieu = await TheoDoiMuonSach.create({
-        MADOCGIA,
-        MASACH,
-        NGAYMUON: ngayMuon,
-        NGAYHENTRA: ngayHenTra,
-        TRANGTHAI: "Đang Mượn",
-        TIENCOC: tienCoc,
-        TIENPHAT: 0,
-      });
-    } catch (error) {
-      await Sach.updateOne({ MASACH }, { $inc: { SOQUYEN: 1 } });
-      throw error;
-    }
-
-    return res.status(201).json({
-      message: "Lập phiếu mượn sách thành công.",
-      phieu,
-    });
-  } catch (error) {
-    return sendServerError(res, error, "Không thể tạo phiếu mượn.");
-  }
-};
-
-const traSach = async (req, res) => {
-  try {
-    const phieu = await TheoDoiMuonSach.findOne({
-      _id: req.params.id,
-      TRANGTHAI: { $in: ["Đang Mượn", "Trễ Hạn"] },
-      NGAYTRA: null,
-    });
-
-    if (!phieu) {
-      const exists = await TheoDoiMuonSach.exists({ _id: req.params.id });
-      if (exists) {
-        return res
-          .status(409)
-          .json({ message: "Phiếu này đã được trả trước đó." });
-      }
-      return res.status(404).json({ message: "Không tìm thấy phiếu mượn." });
-    }
-
-    const ngayTra = new Date();
-    const diffMs = startOfDay(ngayTra) - startOfDay(new Date(phieu.NGAYHENTRA));
-    const ngayTre = Math.max(0, Math.ceil(diffMs / MILLISECONDS_PER_DAY));
-
-    const tienCoc = Number(phieu.TIENCOC) || 0;
-    let tienPhat = 0;
-    let tichThuCoc = false;
-
-    // QUY TẮC MỚI: Nếu vượt quá 30 ngày trễ hạn -> Tịch thu tiền cọc mượn sách!
-    if (ngayTre > 30) {
-      tichThuCoc = true;
-      tienPhat = tienCoc > 0 ? tienCoc : 100000;
-    } else if (ngayTre > 0) {
-      tienPhat = ngayTre * TIEN_PHAT_MOI_NGAY;
-    }
-
-    const phieuDaTra = await TheoDoiMuonSach.findOneAndUpdate(
-      {
-        _id: phieu._id,
-        TRANGTHAI: { $in: ["Đang Mượn", "Trễ Hạn"] },
-        NGAYTRA: null,
-      },
-      {
-        $set: {
-          NGAYTRA: ngayTra,
-          TRANGTHAI: "Đã Trả",
-          TIENPHAT: tienPhat,
-        },
-      },
-      { new: true, runValidators: true },
-    );
-
-    if (!phieuDaTra) {
-      return res.status(409).json({ message: "Phiếu đang được xử lý trả." });
-    }
-
-    // Hoàn trả 1 quyển sách vào kho
-    await Sach.updateOne({ MASACH: phieu.MASACH }, { $inc: { SOQUYEN: 1 } });
-
-    return res.json({
-      message: tichThuCoc
-        ? "Trả sách thành công (Lưu ý: Quá 30 ngày trễ - Đã tịch thu tiền cọc mượn sách)."
-        : ngayTre > 0
-          ? `Trả sách thành công. Trễ ${ngayTre} ngày, số tiền phạt: ${tienPhat.toLocaleString("vi-VN")} đ.`
-          : "Trả sách đúng hạn thành công. Hoàn trả cọc cho độc giả.",
-      TIENPHAT: tienPhat,
-      TIENCOC: tienCoc,
-      phieu: phieuDaTra,
-    });
-  } catch (error) {
-    return sendServerError(res, error, "Không thể trả sách.");
-  }
-};
-
-const getSachTreHan = async (req, res) => {
-  try {
-    const homNay = new Date();
-    homNay.setHours(0, 0, 0, 0);
-
-    // Tự động chuyển các phiếu quá hạn sang trạng thái "Trễ Hạn"
-    await TheoDoiMuonSach.updateMany(
-      {
-        TRANGTHAI: "Đang Mượn",
-        NGAYHENTRA: { $lt: homNay },
-        NGAYTRA: null,
-      },
-      { $set: { TRANGTHAI: "Trễ Hạn" } },
-    );
-
-    const phieuTreHan = await TheoDoiMuonSach.find({
-      TRANGTHAI: "Trễ Hạn",
-      NGAYTRA: null,
-    });
-
-    for (const phieu of phieuTreHan) {
-      const diffMs =
-        startOfDay(new Date()) - startOfDay(new Date(phieu.NGAYHENTRA));
-      const ngayTre = Math.max(0, Math.ceil(diffMs / MILLISECONDS_PER_DAY));
-      const tienCoc = Number(phieu.TIENCOC) || 0;
-
-      let tienPhat = 0;
-
-      if (ngayTre > 30) {
-        tienPhat = tienCoc > 0 ? tienCoc : 100000;
-      } else {
-        tienPhat = ngayTre * TIEN_PHAT_MOI_NGAY;
-      }
-
-      await TheoDoiMuonSach.updateOne(
-        { _id: phieu._id },
-        {
-          $set: {
-            TIENPHAT: tienPhat,
-          },
-        },
-      );
-    }
-
-    const danhSach = await TheoDoiMuonSach.find({
-      TRANGTHAI: "Trễ Hạn",
-      NGAYTRA: null,
-    }).sort({ NGAYHENTRA: 1 });
-
-    const result = await attachRelatedInfo(danhSach, ["TENSACH", "TIENCOC"]);
-    return res.json(result);
-  } catch (error) {
-    return sendServerError(res, error, "Không thể lấy danh sách sách trễ hạn.");
-  }
-};
-
 module.exports = {
   getAllTheoDoiMuonSach,
+  getMyLoans,
   getTheoDoiMuonSachById,
+  yeuCauMuonSach,
+  duyetMuonSach,
+  tuChoiMuonSach,
   createTheoDoiMuonSach,
   updateTheoDoiMuonSach,
   deleteTheoDoiMuonSach,

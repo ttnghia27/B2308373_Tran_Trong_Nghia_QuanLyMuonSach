@@ -11,14 +11,18 @@ const {
 const {
   authenticate,
   authorizeAdminOrStaff,
+  authorizeAdmin,
 } = require("../controllers/authController");
 
 router.use(authenticate);
-router.use(authorizeAdminOrStaff);
+
+// Độc giả và Nhân viên đều xem được NXB
 router.get("/", getAllNhaXuatBan);
 router.get("/:id", getNhaXuatBanById);
-router.post("/", createNhaXuatBan);
-router.put("/:id", updateNhaXuatBan);
-router.delete("/:id", deleteNhaXuatBan);
-router.delete("/", deleteAllNhaXuatBan);
+
+router.post("/", authorizeAdminOrStaff, createNhaXuatBan);
+router.put("/:id", authorizeAdminOrStaff, updateNhaXuatBan);
+router.delete("/:id", authorizeAdmin, deleteNhaXuatBan);
+router.delete("/", authorizeAdmin, deleteAllNhaXuatBan);
+
 module.exports = router;

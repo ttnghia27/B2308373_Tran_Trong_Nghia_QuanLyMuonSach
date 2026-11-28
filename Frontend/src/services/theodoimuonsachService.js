@@ -6,17 +6,39 @@ class TheoDoiMuonSachService {
     this.baseUrl = baseUrl;
   }
 
-  async getSachTreHan(params = {}) {
-    return (await this.api.get(`${this.baseUrl}/tre-han`, { params })).data;
+  // Độc giả gửi yêu cầu mượn sách trực tuyến (chờ duyệt)
+  async yeuCauMuon(data) {
+    return (await this.api.post(`${this.baseUrl}/yeu-cau`, data)).data;
   }
 
+  // Độc giả xem danh sách phiếu mượn của mình
+  async getMyLoans() {
+    return (await this.api.get(`${this.baseUrl}/cua-toi`)).data;
+  }
+
+  // Thủ thư duyệt mượn
+  async duyetMuon(id) {
+    return (await this.api.put(`${this.baseUrl}/${id}/duyet`)).data;
+  }
+
+  // Thủ thư từ chối mượn
+  async tuChoiMuon(id, data = {}) {
+    return (await this.api.put(`${this.baseUrl}/${id}/tu-choi`, data)).data;
+  }
+
+  // Thủ thư lập phiếu mượn trực tiếp tại quầy
   async muonSach(data) {
     return (await this.api.post(`${this.baseUrl}/muon`, data)).data;
   }
 
+  // Trả sách kèm số tiền phạt trễ hạn + phạt hư hại sách
   async traSach(id, data = {}) {
     if (!id) throw new Error("Thiếu id phiếu mượn");
     return (await this.api.put(`${this.baseUrl}/${id}/tra`, data)).data;
+  }
+
+  async getSachTreHan(params = {}) {
+    return (await this.api.get(`${this.baseUrl}/tre-han`, { params })).data;
   }
 
   async getAllTheoDoiMuonSach(params = {}) {
@@ -43,4 +65,5 @@ class TheoDoiMuonSachService {
     return (await this.api.delete(this.baseUrl)).data;
   }
 }
+
 export default new TheoDoiMuonSachService();

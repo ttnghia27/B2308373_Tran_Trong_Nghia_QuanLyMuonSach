@@ -11,14 +11,18 @@ const {
 const {
   authenticate,
   authorizeAdminOrStaff,
+  authorizeAdmin,
 } = require("../controllers/authController");
 
 router.use(authenticate);
-router.use(authorizeAdminOrStaff);
+
+// Độc giả và Nhân viên đều xem được thể loại
 router.get("/", getAllTheLoai);
 router.get("/:id", getTheLoaiById);
-router.post("/", createTheLoai);
-router.put("/:id", updateTheLoai);
-router.delete("/:id", deleteTheLoai);
-router.delete("/", deleteAllTheLoai);
+
+router.post("/", authorizeAdminOrStaff, createTheLoai);
+router.put("/:id", authorizeAdminOrStaff, updateTheLoai);
+router.delete("/:id", authorizeAdmin, deleteTheLoai);
+router.delete("/", authorizeAdmin, deleteAllTheLoai);
+
 module.exports = router;

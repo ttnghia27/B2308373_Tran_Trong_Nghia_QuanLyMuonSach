@@ -15,25 +15,38 @@
 
 ---
 
-## 2. PHÂN QUYỀN 2 VAI TRÒ VỚI 2 KHÔNG GIAN RIÊNG BIỆT (RBAC)
+## 2. PHÂN QUYỀN HỆ THỐNG VỚI CÁC VAI TRÒ & KHÔNG GIAN RIÊNG BIỆT (RBAC)
 
-Hệ thống có 2 nhóm quyền tài khoản (Lưu tại trường `CHUCVU` trong Collection `NhanVien`):
+Hệ thống hỗ trợ 3 nhóm vai trò với không gian làm việc tách biệt rõ ràng:
 
 ### 2.1. 👑 Quản trị viên (`CHUCVU: "Admin"`)
 - **Trang Dashboard chính:** `/admin` (`AdminDashboard.vue`).
 - **Quyền hạn:**
-  - Toàn quyền xem thống kê phân tích hệ thống (Analytics Dashboard): Doanh thu/tiền phạt, số sách hư hao, lượng mượn theo tháng, tỷ lệ trả đúng hạn.
-  - **Duy nhất Admin có quyền truy cập module Nhân sự** (`/admin/nhanvien`): Thêm, sửa thông tin, đặt lại mật khẩu, phân chức vụ, xóa hoặc khóa nhân viên.
-  - Toàn quyền xóa các tài nguyên quan trọng (xóa sách vĩnh viễn, xóa độc giả, xóa NXB, thể loại).
-  - Có thể chuyển sang giao diện của Nhân viên để hỗ trợ mượn/trả sách khi cần.
+  - Toàn quyền xem thống kê phân tích hệ thống (Analytics Dashboard): Doanh thu, tổng tiền phạt (trễ hạn + hư hại), số sách hư hao, lượng mượn theo tháng, tỷ lệ trả đúng hạn.
+  - **Duy nhất Admin có quyền truy cập module Quản lý Nhân sự** (`/admin/nhanvien`): Thêm, sửa thông tin, đặt lại mật khẩu, phân chức vụ, xóa hoặc khóa nhân viên.
+  - Toàn quyền xóa các tài nguyên quan trọng (xóa sách vĩnh viễn, xóa độc giả, xóa NXB, thể loại, xóa phiếu mượn).
+  - Có thể chuyển đổi sang giao diện quầy trực của Nhân viên để hỗ trợ mượn/trả và duyệt sách khi cần.
 
 ### 2.2. 🧑‍💼 Nhân viên / Thủ thư (`CHUCVU: "Nhân Viên"`)
 - **Trang Dashboard chính:** `/staff` (`StaffDashboard.vue`).
 - **Quyền hạn:**
-  - Không gian làm việc tối ưu cho quầy trực (Librarian Desk POS): Mượn sách nhanh, trả sách 1-click, thu tiền phạt trễ hạn.
+  - Không gian làm việc tối ưu cho quầy trực (Librarian Desk):
+    - **Duyệt yêu cầu mượn sách của độc giả:** Tiếp nhận các yêu cầu mượn trực tuyến ở trạng thái "Chờ duyệt", kiểm tra tồn kho và bấm "Duyệt" (giảm số lượng sách, chuyển sang "Đang mượn") hoặc "Từ chối".
+    - **Lập phiếu mượn trực tiếp tại quầy:** Mượn sách nhanh cho độc giả đến quầy.
+    - **Trả sách & Thu phạt:** Xác nhận trả sách, tự động tính tiền phạt trễ hạn; kiểm tra tình trạng sách thực tế và **tính thêm tiền phạt nếu độc giả làm hư hại/rách/hỏng/mất sách**.
   - Tra cứu sách, kiểm tra tồn kho, thêm sách mới, cập nhật số lượng sách trong kho (nhưng **không có quyền xóa vĩnh viễn sách**).
   - Quản lý thẻ độc giả: Tạo thẻ mới cho bạn đọc, cập nhật thông tin liên hệ, xem lịch sử mượn (nhưng **không được xóa độc giả**).
   - **BỊ CHẶN HOÀN TOÀN** khỏi trang `/admin/nhanvien` (cả trên giao diện menu, router guard và middleware backend).
+
+### 2.3. 📖 Độc giả / Bạn đọc (`Role: "DocGia"`)
+- **Trang chính:** `/reader` hoặc giao diện Portal dành cho độc giả (`ReaderPortal.vue` / `DocGiaDashboard.vue`).
+- **Quyền hạn:**
+  - **Đăng ký tài khoản trực tuyến:** Độc giả tự đăng ký tài khoản (họ tên, ngày sinh, phái, địa chỉ, số điện thoại, mật khẩu).
+  - **Đăng nhập hệ thống:** Đăng nhập an toàn bằng Mã độc giả (hoặc SĐT) và Mật khẩu.
+  - **Tra cứu & Tìm kiếm sách:** Xem danh mục sách, thể loại, nhà xuất bản, tình trạng còn/hết sách, tiền cọc quy định.
+  - **Gửi yêu cầu mượn sách trực tuyến:** Chọn sách cần mượn, chọn thời hạn mượn (7, 14, 21, 30 ngày) và bấm gửi yêu cầu ➔ Phiếu mượn được tạo ở trạng thái **"Chờ duyệt"**.
+  - **Theo dõi lịch sử & Phiếu mượn cá nhân:** Xem danh sách các sách đang chờ duyệt, sách đang mượn, hạn trả sách, sách đã trả, các khoản phạt trễ hạn hoặc phạt do hư hại sách (nếu có).
+  - Độc giả bị hạn chế hoàn toàn, không được truy cập vào các không gian quản trị (`/admin`, `/staff`, `/nhanvien`).
 
 ---
 
@@ -42,11 +55,12 @@ Hệ thống có 2 nhóm quyền tài khoản (Lưu tại trường `CHUCVU` tro
 ### 3.1. Collection `NhanVien` (`app/models/NhanVien.js`)
 - `MSNV`: String, unique, required, uppercase, trim.
 - `HOTENNV`: String, required, trim.
-- `PASSWORD`: String, required (được tự động hash bằng bcrypt).
+- `PASSWORD`: String, required (tự động hash bằng bcryptjs).
 - `CHUCVU`: String, enum: `["Admin", "Nhân Viên"]`, default: `"Nhân Viên"`.
 - `DIACHI`: String, trim.
-- `SODIENTHOAI`: String, trim.
+- `SODIENTHOAI`: String, required, maxlength: 10, trim.
 - `TRANGTHAI`: Boolean, default: true (hoạt động/khóa).
+- Phương thức `comparePassword(candidatePassword)`.
 - `timestamps: true`.
 
 ### 3.2. Collection `DOCGIA` (`app/models/DocGia.js`)
@@ -56,9 +70,10 @@ Hệ thống có 2 nhóm quyền tài khoản (Lưu tại trường `CHUCVU` tro
 - `NGAYSINH`: Date, required.
 - `PHAI`: String, enum: `["Nam", "Nữ", "Khác"]`, default: `"Nam"`.
 - `DIACHI`: String, required, trim.
-- `DIENTHOAI`: String, required, trim.
-- `PASSWORD`: String, default: null (phục vụ độc giả tra cứu trực tuyến nếu có).
+- `DIENTHOAI`: String, required, maxlength: 10, trim.
+- `PASSWORD`: String, required: true (mật khẩu phục vụ độc giả đăng ký/đăng nhập, tự động hash bằng bcryptjs).
 - `TRANGTHAI`: String, enum: `["HoatDong", "KhoaThe"]`, default: `"HoatDong"`.
+- Phương thức `comparePassword(candidatePassword)`.
 - `timestamps: true`.
 
 ### 3.3. Collection `NHAXUATBAN` (`app/models/NhaXuatBan.js`)
@@ -68,72 +83,116 @@ Hệ thống có 2 nhóm quyền tài khoản (Lưu tại trường `CHUCVU` tro
 - `timestamps: true`.
 
 ### 3.4. Collection `THELOAI` (`app/models/TheLoai.js`)
-- `MATHELOAI`: String, unique, required, uppercase, trim.
-- `TENTHELOAI`: String, required, trim.
-- `MOTA`: String, default: "".
+- `MATL`: String, unique, required, uppercase, trim.
+- `TENTL`: String, required, trim.
 - `timestamps: true`.
 
 ### 3.5. Collection `SACH` (`app/models/Sach.js`)
 - `MASACH`: String, unique, required, uppercase, trim.
 - `TENSACH`: String, required, trim.
+- `MATL`: String, required, uppercase, trim.
 - `DONGIA`: Number, required, min: 0.
+- `TIENCOC`: Number, min: 0, default: 50000.
 - `SOQUYEN`: Number, required, min: 0 (Số quyển tồn kho có thể cho mượn).
 - `NAMXUATBAN`: Number, required.
 - `MANXB`: String, required, uppercase, trim.
-- `MATHELOAI`: String, uppercase, trim (tùy chọn hoặc liên kết Thể loại).
-- `NGUONGOC/TACGIA`: String, required, trim (kèm Virtual alias `TACGIA`).
-- `HINHANH`: String, default: "" (Đường dẫn tĩnh `/uploads/...`).
+- `NGUONGOC/TACGIA`: String, required, trim.
+- `HINHAH` / `HINHANH`: String, default: "" (Đường dẫn tĩnh `/uploads/...`).
 - `timestamps: true`.
 
 ### 3.6. Collection `THEODOIMUONSACH` (`app/models/TheoDoiMuonSach.js`)
 - `MADOCGIA`: String, required, uppercase, trim.
 - `MASACH`: String, required, uppercase, trim.
-- `MSNV`: String, required (Mã nhân viên lập phiếu mượn).
+- `MSNV`: String, default: null, trim (Mã nhân viên duyệt / lập phiếu; null khi độc giả tạo yêu cầu trực tuyến).
 - `NGAYMUON`: Date, required, default: Date.now.
-- `HANTRA`: Date, required (Mặc định: `NGAYMUON + 14 ngày`).
+- `NGAYHENTRA`: Date, required.
 - `NGAYTRA`: Date, default: null.
-- `TIENPHAT`: Number, default: 0 (Đơn giá phạt mặc định: 5.000 VNĐ/ngày trễ hạn).
-- `TRANGTHAI_PHAT`: String, enum: `["KhongPhat", "ChuaNop", "DaNop"]`, default: `"KhongPhat"`.
-- `TRANGTHAI`: String, enum: `["DangMuon", "DaTra", "QuaHan"]`, default: `"DangMuon"`.
+- `TRANGTHAI`: String, required, enum: `["Chờ Duyệt", "Đang Mượn", "Đã Trả", "Trễ Hạn", "Từ Chối"]`, default: `"Đang Mượn"`.
+- `TIENCOC`: Number, required, min: 0, default: 0.
+- `TIENPHAT`: Number, required, min: 0, default: 0 (Tổng tiền phạt: bao gồm phạt trễ hạn + phạt hư hại sách nếu có).
 - `timestamps: true`.
 
 ---
 
 ## 4. CHI TIẾT NGHIỆP VỤ CỐT LÕI (CORE BUSINESS LOGIC)
 
-### 4.1. Quy trình Mượn sách (Borrow Flow)
-1. **Tiếp nhận:** Nhân viên nhập `MADOCGIA` và `MASACH` (hoặc quét mã vạch).
-2. **Kiểm tra hợp lệ:**
-   - Độc giả có tồn tại không? Trạng thái thẻ có bị khóa hoặc đang nợ tiền phạt chưa nộp không?
-   - Số sách độc giả đang mượn có vượt quá giới hạn không (tối đa ví dụ 5 cuốn)?
-   - Sách có tồn tại không? `SOQUYEN` trong kho có `> 0` không?
-3. **Thực thi:**
-   - Giảm tồn kho: `sach.SOQUYEN -= 1; await sach.save();`
-   - Tạo phiếu mượn: `HANTRA = NGAYMUON + 14 ngày`, `TRANGTHAI = "DangMuon"`.
-4. **Phản hồi:** Trả về chi tiết phiếu mượn kèm thông tin sách và độc giả.
+### 4.1. Đăng ký & Đăng nhập cho Độc giả (Reader Register & Login)
+1. **Đăng ký tài khoản (`POST /api/auth/docgia/register`):**
+   - Độc giả điền thông tin: `HOLOT`, `TEN`, `NGAYSINH`, `PHAI`, `DIACHI`, `DIENTHOAI`, `PASSWORD`.
+   - Hệ thống tự sinh `MADOCGIA` duy nhất (ví dụ: `DG` + 6 số ngẫu nhiên hoặc timestamp) hoặc cho phép nhập.
+   - Kiểm tra `DIENTHOAI` và `MADOCGIA` không được trùng với độc giả đã có.
+   - Mã hóa `PASSWORD` bằng bcryptjs trước khi lưu vào MongoDB.
+2. **Đăng nhập (`POST /api/auth/docgia/login`):**
+   - Độc giả nhập `MADOCGIA` (hoặc `DIENTHOAI`) và `PASSWORD`.
+   - Kiểm tra trạng thái thẻ `TRANGTHAI === "KhoaThe"` thì thông báo khóa, không cho đăng nhập.
+   - Xác thực mật khẩu qua `comparePassword`. Cấp JWT token kèm thông tin `{ id: docGia._id, role: "DocGia", madocgia: docGia.MADOCGIA }`.
+3. **Lấy thông tin tài khoản hiện tại (`GET /api/auth/docgia/me`):**
+   - Xác thực qua token, trả về thông tin độc giả (ẩn mật khẩu).
 
-### 4.2. Quy trình Trả sách & Tính phạt tự động (Return & Penalty Flow)
-1. **Tiếp nhận:** Chọn phiếu mượn hoặc quét mã phiếu/sách để trả.
-2. **Xử lý ngày tháng & Tính phạt trễ hạn:**
-   - Ngày trả thực tế: `NGAYTRA = new Date()`.
-   - Tính chênh lệch:
+### 4.2. Độc giả Gửi yêu cầu Mượn sách & Quy trình Chờ Duyệt (Borrow Request & Approval Flow)
+1. **Độc giả gửi yêu cầu mượn (`POST /api/theodoimuonsach/yeucau`):**
+   - Độc giả chọn sách cần mượn (`MASACH`) và số ngày mượn (`SONGAYMUON`: mặc định 14 ngày).
+   - Kiểm tra:
+     - Thẻ độc giả có đang bị khóa hay không.
+     - Độc giả có đang mượn quá số sách quy định (tối đa ví dụ 5 cuốn) hoặc đang nợ sách quá hạn chưa trả không.
+     - Sách có tồn tại và còn số quyển khả dụng (`SOQUYEN > 0`) không.
+   - Tạo bản ghi phiếu mượn với:
+     - `TRANGTHAI = "ChoDuyet"` (Chờ Duyệt).
+     - `TIENCOC`: Lấy theo `TIENCOC` của sách (hoặc `DONGIA`).
+     - `MSNV = null`.
+     - *Lưu ý:* Chưa trừ tồn kho `SOQUYEN` ở bước này (hoặc tạm giữ chỗ nếu nghiệp vụ yêu cầu, nhưng tối ưu nhất là trừ kho chính thức khi duyệt).
+2. **Thủ thư / Admin Duyệt yêu cầu (`PUT /api/theodoimuonsach/:id/duyet`):**
+   - Kiểm tra lại tồn kho sách `SOQUYEN > 0`.
+   - Giảm tồn kho: `await Sach.updateOne({ MASACH }, { $inc: { SOQUYEN: -1 } })`.
+   - Cập nhật phiếu mượn:
+     - `TRANGTHAI = "DangMuon"` (Đang Mượn).
+     - `MSNV`: Mã nhân viên đang đăng nhập thực hiện duyệt.
+     - `NGAYMUON = new Date()`.
+     - `NGAYHENTRA = new Date(NGAYMUON + SONGAYMUON ngày)`.
+3. **Thủ thư / Admin Từ chối yêu cầu (`PUT /api/theodoimuonsach/:id/tuchoi`):**
+   - Nhập lý do từ chối `LYDOTUCHOI`.
+   - Cập nhật `TRANGTHAI = "TuChoi"`. Không trừ tồn kho sách.
+
+### 4.3. Quy trình Trả sách, Tính phạt Quá hạn & Phạt Hư hại sách (Return & Penalty Flow)
+1. **Tiếp nhận trả sách:**
+   - Nhân viên mở phiếu mượn đang mượn hoặc trễ hạn.
+2. **Tính tiền phạt trễ hạn (nếu có):**
+   - `NGAYTRA = new Date()`.
+   - Tính số ngày trễ:
      ```javascript
-     const diffTime = new Date(NGAYTRA) - new Date(HANTRA);
-     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-     if (diffDays > 0) {
-       TIENPHAT = diffDays * 5000; // 5.000 VNĐ / ngày trễ
-       TRANGTHAI_PHAT = "ChuaNop"; // hoặc "DaNop" nếu thu tiền ngay tại quầy
-     } else {
-       TIENPHAT = 0;
-       TRANGTHAI_PHAT = "KhongPhat";
+     const diffMs = startOfDay(NGAYTRA) - startOfDay(new Date(phieu.NGAYHENTRA));
+     const ngayTre = Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
+     let tienPhatTre = 0;
+     let tichThuCoc = false;
+     
+     // Quy tắc quá hạn 30 ngày: Tịch thu cọc
+     if (ngayTre > 30) {
+       tichThuCoc = true;
+       tienPhatTre = phieu.TIENCOC > 0 ? phieu.TIENCOC : 100000;
+     } else if (ngayTre > 0) {
+       tienPhatTre = ngayTre * 5000; // 5.000 VNĐ / ngày trễ
      }
      ```
-3. **Hoàn trả kho:** Tăng tồn kho `sach.SOQUYEN += 1; await sach.save();`
-4. **Cập nhật phiếu:** Chuyển `TRANGTHAI = "DaTra"`.
-
-### 4.3. Quản lý Thu tiền phạt (Penalty Settlement)
-- Endpoint: `PUT /api/muonsach/:id/thupat`
-- Cho phép nhân viên cập nhật `TRANGTHAI_PHAT = "DaNop"` khi độc giả đã thanh toán xong tiền phạt.
+3. **Tính thêm tiền phạt nếu làm hư hại sách:**
+   - Nhân viên kiểm tra sách khi độc giả mang trả.
+   - Nếu phát hiện hư hại (rách trang, vẽ bẩn, ướt nước, mất bìa, hỏng bìa hoặc mất hoàn toàn sách):
+     - Nhân viên nhập số tiền phạt hư hại: `TIENPHATHUHAI` (ví dụ: hỏng nhẹ 20.000đ - 50.000đ; rách nát / mất sách: phạt 100% - 200% đơn giá sách).
+     - Nhân viên ghi rõ lý do vào: `GHICHUHUHAI` (ví dụ: *"Rách trang 15-20, mất gáy sách"*).
+4. **Tổng tiền phạt & Hoàn / Giữ tiền cọc:**
+   - **Tổng tiền phạt** = `tienPhatTre` + `TIENPHATHUHAI`.
+   - So khớp với tiền cọc `TIENCOC`:
+     - Nếu `tichThuCoc === true`: Tịch thu toàn bộ cọc + Độc giả nộp thêm `TIENPHATHUHAI` (nếu có).
+     - Nếu không tịch thu cọc:
+       - Nếu `TongTienPhat <= TIENCOC`: Trừ trực tiếp vào cọc, hoàn trả phần dư `(TIENCOC - TongTienPhat)` cho độc giả.
+       - Nếu `TongTienPhat > TIENCOC`: Giữ lại toàn bộ cọc và độc giả phải đóng thêm `(TongTienPhat - TIENCOC)`.
+5. **Cập nhật phiếu & Hoàn trả kho sách:**
+   - Cập nhật phiếu mượn:
+     - `NGAYTRA = new Date()`.
+     - `TRANGTHAI = "DaTra"`.
+     - `TIENPHAT = tienPhatTre`.
+     - `TIENPHATHUHAI = tienPhatHuHai`.
+     - `GHICHUHUHAI = ghiChuHuHai`.
+   - Hoàn trả 1 quyển vào kho nếu sách còn tái sử dụng được: `await Sach.updateOne({ MASACH }, { $inc: { SOQUYEN: 1 } })`.
 
 ---
 
@@ -147,178 +206,114 @@ Tất cả các API lấy danh sách (`GET`) và giao diện Frontend tương �
 - `matheloai`: Lọc chính xác theo Thể loại.
 - `tinhtrang`: `con-sach` (`SOQUYEN > 0`) hoặc `het-sach` (`SOQUYEN = 0`).
 
-### 5.2. Quản lý Mượn Sách (`/api/muonsach`)
+### 5.2. Quản lý Mượn Sách (`/api/theodoimuonsach`)
 - `madocgia`: Lọc phiếu mượn của 1 độc giả.
 - `masach`: Lọc phiếu mượn của 1 cuốn sách.
-- `trangthai`: `"DangMuon"`, `"DaTra"`, `"QuaHan"`.
-- `quahan`: Boolean `true` để lấy ngay danh sách các phiếu quá hạn mà chưa trả.
-- `chuanopphat`: Boolean `true` để lấy danh sách phiếu có `TRANGTHAI_PHAT == "ChuaNop"`.
+- `trangthai`: Hỗ trợ đầy đủ các tab:
+  - `"ALL"`: Tất cả phiếu.
+  - `"ChoDuyet"`: Phiếu độc giả gửi yêu cầu đang chờ thủ thư duyệt.
+  - `"DangMuon"`: Phiếu đang trong thời hạn mượn.
+  - `"TreHan"`: Phiếu đã quá hạn hẹn trả mà chưa trả.
+  - `"DaTra"`: Phiếu đã hoàn tất trả sách.
+  - `"TuChoi"`: Phiếu yêu cầu bị từ chối.
+- `search`: Tìm kiếm nhanh mã độc giả, tên độc giả, mã sách, tên sách.
 
-### 5.3. Độc giả (`/api/docgia`)
+### 5.3. Quản lý Độc giả (`/api/docgia`)
 - `keyword`: Tìm theo `MADOCGIA`, `TEN`, `HOLOT`, `DIENTHOAI`.
 
 ---
 
 ## 6. ĐẶC TẢ GIAO DIỆN FRONTEND (UI/UX PAGES)
 
-### 6.1. Trang 1: `src/views/admin/AdminDashboard.vue` (Chỉ Admin)
-- **Khu vực Thống kê (Metric Cards):**
-  - Tổng số đầu sách & Tổng số quyển trong kho.
-  - Số lượng độc giả đang hoạt động.
-  - Số nhân viên thư viện.
-  - Số phiếu đang mượn & Số phiếu đang quá hạn cảnh báo đỏ.
-  - Tổng số tiền phạt đã thu & tiền phạt còn nợ.
-- **Biểu đồ / Danh sách giám sát:**
-  - Bảng top 5 cuốn sách được mượn nhiều nhất.
-  - Nhật ký các hoạt động mượn/trả gần nhất của nhân viên trong ngày.
+### 6.1. Trang Quản trị viên: `src/views/Dashboard.vue` (Chỉ Admin)
+- Metric Cards: Tổng số sách, số độc giả, số nhân viên, phiếu đang mượn, phiếu chờ duyệt, phiếu quá hạn.
+- Doanh thu & Thống kê tài chính: Tổng tiền phạt trễ hạn đã thu, tổng tiền phạt hư hại sách đã thu, số tiền cọc đang giữ.
+- Bảng Top sách mượn nhiều nhất & Nhật ký hoạt động gần đây.
 
-### 6.2. Trang 2: `src/views/staff/StaffDashboard.vue` (Dành cho Nhân viên)
-- **Bàn làm việc Quầy trực (Librarian Desk):**
-  - **Widget 1: Form Mượn sách Nhanh:** Nhập Mã độc giả + Mã sách ➔ Nút "Mượn sách". Tự động hiển thị tên độc giả và tên sách để nhân viên xác nhận trước khi lưu.
-  - **Widget 2: Quét/Nhập Trả sách Nhanh:** Nhập mã phiếu/mã sách ➔ Tự động tính số ngày trễ, hiện số tiền phạt nếu có ➔ Nút "Xác nhận trả & Thu tiền".
-  - **Widget 3: Danh sách Cảnh báo Quá hạn:** Bảng danh sách các phiếu mượn quá hạn kèm số điện thoại độc giả để nhân viên gọi điện nhắc nhở.
+### 6.2. Trang Thủ thư / Quầy trực: `src/views/TheoDoiMuonSach.vue`
+- **Thanh Tab lọc trạng thái:**
+  - `Tất cả` | `Chờ duyệt (Pending)` | `Đang mượn` | `Trễ hạn` | `Đã trả` | `Từ chối`.
+  - Có badge số lượng động trên từng tab.
+- **Tab Chờ duyệt:**
+  - Hiển thị danh sách các yêu cầu mượn trực tuyến của độc giả.
+  - Cột thao tác:
+    - Nút **"Duyệt"** (màu xanh): Click mở xác nhận ➔ Duyệt mượn, trừ 1 sách trong kho, gán ngày hẹn trả.
+    - Nút **"Từ chối"** (màu đỏ): Click mở modal nhập lý do từ chối và hủy yêu cầu.
+- **Modal Lập phiếu mượn trực tiếp tại quầy:** Nhập Mã độc giả, Mã sách, chọn thời hạn mượn ➔ Bấm xác nhận cho mượn.
+- **Modal Xác nhận Trả sách (Kèm phạt hư hại sách):**
+  - Hiển thị thông tin sách, độc giả, tiền cọc, số ngày trễ hạn và tiền phạt quá hạn tự động.
+  - **Mục "Kiểm tra tình trạng sách":**
+    - Checkbox: "Sách bình thường / nguyên vẹn" vs "Sách bị hư hại / rách / mất".
+    - Khi tích chọn hư hại: Hiện ô nhập **Số tiền phạt hư hại sách (VNĐ)** và **Ghi chú lý do hư hại**.
+    - Tự động cộng tổng: `Tổng tiền phạt = Phạt trễ hạn + Phạt hư hại`.
+    - Tính toán hiển thị số tiền hoàn lại cho độc giả hoặc số tiền độc giả phải nộp thêm.
 
-### 6.3. Trang Quản trị Nhân sự: `src/views/admin/NhanVienManager.vue` (Chỉ Admin)
+### 6.3. Không gian dành cho Độc giả:
+- **Trang Đăng ký Độc giả (`Register.vue`):** Form đăng ký tài khoản với các trường thông tin đầy đủ, kiểm tra dữ liệu hợp lệ trước khi submit.
+- **Trang Đăng nhập Độc giả (`Login.vue`):** Có tab chuyển đổi giữa "Nhân viên / Thủ thư" và "Độc giả" (hoặc màn hình đăng nhập thân thiện).
+- **Trang Portal / Tra cứu & Mượn sách của Độc giả (`ReaderPortal.vue` / `Sach.vue`):**
+  - Xem danh mục sách dạng lưới / thẻ kèm ảnh bìa, tác giả, thể loại, tình trạng còn sách.
+  - Nút **"Mượn sách"**: Độc giả click vào sách muốn mượn ➔ Chọn thời hạn mượn (7, 14, 21 ngày) ➔ Xác nhận gửi yêu cầu.
+- **Trang Lịch sử & Theo dõi mượn của Độc giả (`ReaderHistory.vue` / `MyLoans.vue`):**
+  - Xem các phiếu đang chờ duyệt, phiếu đang mượn, ngày hẹn trả.
+  - Cảnh báo rõ ràng nếu phiếu sắp đến hạn hoặc đang quá hạn.
+  - Xem chi tiết các khoản phạt: Phạt trễ hạn & Phạt do làm hư hại sách (kèm lý do ghi chú của thủ thư) để minh bạch tài chính.
+
+### 6.4. Trang Quản trị Nhân sự: `src/views/NhanVien.vue` (Chỉ Admin)
 - Bảng danh sách nhân viên, avatar, MSNV, Họ tên, Chức vụ (Admin / Nhân Viên), SĐT.
-- Modal Thêm nhân viên mới / Sửa thông tin / Đặt lại mật khẩu.
-- Nút khóa / kích hoạt tài khoản.
+- Thêm nhân viên mới / Sửa thông tin / Đặt lại mật khẩu.
 - Chặn không cho xóa tài khoản của chính mình hoặc tài khoản Admin duy nhất.
 
-### 6.4. Trang Quản lý Sách: `src/views/SachManager.vue`
-- Bảng sách kèm hình ảnh thumbnail bìa sách (`/uploads/...`).
-- Ô tìm kiếm từ khóa + Dropdown lọc Thể loại + Lọc NXB.
-- Modal Thêm/Sửa sách: Có trường chọn file ảnh bìa (preview ảnh trước khi upload).
-- Cột thao tác: Sửa, Xóa (Nút Xóa chỉ hiển thị với Admin: `v-if="auth.isAdmin"`).
-
-### 6.5. Trang Mượn - Trả: `src/views/MuonSachManager.vue`
-- Bộ lọc Tabs: `Tất cả` | `Đang mượn` | `Quá hạn` | `Đã trả`.
-- Badge màu trạng thái: Xanh lá (Đã trả), Vàng (Đang mượn), Đỏ (Quá hạn).
-- Nút "Trả sách" mở modal xác nhận hiển thị tiền phạt nếu quá hạn.
+### 6.5. Trang Quản lý Sách: `src/views/Sach.vue`
+- Bảng sách kèm hình ảnh thumbnail bìa sách.
+- Modal Thêm/Sửa sách: Chọn ảnh bìa preview trực tiếp.
+- Nút Xóa chỉ hiển thị với Admin (`v-if="auth.isAdmin"`).
 
 ---
 
-## 7. CẤU HÌNH ROUTER GUARD (VUE ROUTER)
+## 7. CẤU HÌNH ROUTER GUARD & PINIA AUTH STORE
 
-Tệp `src/router/index.js` phải cài đặt Navigation Guard:
+### 7.1. Pinia Store (`src/stores/auth.js`)
+Lưu trữ đồng thời trạng thái đăng nhập cho cả Nhân viên và Độc giả:
+- `user`: Thông tin người dùng hiện tại (Nhân viên hoặc Độc giả).
+- `role`: `"Admin"` | `"Nhân Viên"` | `"DocGia"`.
+- `token`: Lưu tại `localStorage`.
+- Getters: `isAuthenticated`, `isAdmin`, `isStaff`, `isDocGia`.
+- Actions: `loginStaff()`, `loginDocGia()`, `registerDocGia()`, `logout()`, `fetchCurrentUser()`.
 
-```javascript
-import { createRouter, createWebHistory } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
-
-const routes = [
-  {
-    path: "/",
-    redirect: () => {
-      const auth = useAuthStore();
-      if (!auth.isAuthenticated) return "/login";
-      return auth.isAdmin ? "/admin" : "/staff";
-    },
-  },
-  {
-    path: "/login",
-    name: "Login",
-    component: () => import("@/views/Login.vue"),
-  },
-  // ADMIN ROUTES
-  {
-    path: "/admin",
-    name: "AdminDashboard",
-    component: () => import("@/views/admin/AdminDashboard.vue"),
-    meta: { requiresAuth: true, requiresAdmin: true },
-  },
-  {
-    path: "/admin/nhanvien",
-    name: "NhanVienManager",
-    component: () => import("@/views/admin/NhanVienManager.vue"),
-    meta: { requiresAuth: true, requiresAdmin: true },
-  },
-  // STAFF ROUTES
-  {
-    path: "/staff",
-    name: "StaffDashboard",
-    component: () => import("@/views/staff/StaffDashboard.vue"),
-    meta: { requiresAuth: true },
-  },
-  // MODULES CHUNG
-  {
-    path: "/sach",
-    name: "SachManager",
-    component: () => import("@/views/SachManager.vue"),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/docgia",
-    name: "DocGiaManager",
-    component: () => import("@/views/DocGiaManager.vue"),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/muonsach",
-    name: "MuonSachManager",
-    component: () => import("@/views/MuonSachManager.vue"),
-    meta: { requiresAuth: true },
-  },
-  {
-    path: "/:pathMatch(.*)*",
-    name: "NotFound",
-    component: () => import("@/views/NotFound.vue"),
-  },
-];
-
-const router = createRouter({
-  history: createWebHistory(),
-  routes,
-});
-
-router.beforeEach(async (to, from) => {
-  const auth = useAuthStore();
-
-  if (auth.token && !auth.isNhanVienLoaded) {
-    try {
-      await auth.fetchCurrentNhanVien();
-    } catch {
-      auth.logout();
-    }
-  }
-
-  // 1. Chưa đăng nhập
-  if (to.meta.requiresAuth && !auth.isAuthenticated) {
-    return { name: "Login", query: { redirect: to.fullPath } };
-  }
-
-  // 2. Đã đăng nhập nhưng vào trang Login
-  if (to.name === "Login" && auth.isAuthenticated) {
-    return auth.isAdmin ? { name: "AdminDashboard" } : { name: "StaffDashboard" };
-  }
-
-  // 3. Nhân viên cố vào route của Admin -> Điều hướng về /staff
-  if (to.meta.requiresAdmin && !auth.isAdmin) {
-    return { name: "StaffDashboard" };
-  }
-
-  return true;
-});
-
-export default router;
-```
+### 7.2. Navigation Guard (`src/router/index.js`)
+- Nếu chưa đăng nhập mà vào trang yêu cầu `requiresAuth` ➔ Chuyển về trang `Login`.
+- Nếu là `DocGia` cố vào các trang của thư viện/admin (`/admin`, `/theodoimuonsach`, `/nhanvien`) ➔ Chuyển hướng về trang Portal của độc giả (`/reader` hoặc `/sach`).
+- Nếu là `Nhân Viên` cố vào trang Admin (`/admin`, `/nhanvien`) ➔ Chuyển hướng về `/theodoimuonsach` hoặc `/staff`.
+- Nếu là `Admin` ➔ Toàn quyền truy cập mọi tính năng.
 
 ---
 
 ## 8. BẢO VỆ PHÍA BACKEND (SECURITY & MIDDLEWARES)
 
-Cần gắn middleware xác thực và phân quyền trong `Backend/app/routes/`:
-- `authenticate`: Xác thực token hợp lệ.
-- `authorizeAdmin`: Chỉ cho phép nhân viên có `CHUCVU === "Admin"` thực hiện (`POST`, `PUT`, `DELETE` trên `/api/nhanvien`, `DELETE` trên `/api/sach`).
-- `authorizeAdminOrStaff`: Cả 2 quyền đều được thực hiện thao tác nghiệp vụ mượn/trả.
+Cần cấu hình middleware xác thực và phân quyền trong `Backend/app/controllers/authController.js` và `routes/`:
+- `authenticate`: Xác thực JWT token, nhận diện người dùng là Nhân viên hay Độc giả.
+- `authorizeAdmin`: Chỉ cho phép tài khoản nhân viên có `CHUCVU === "Admin"`.
+- `authorizeAdminOrStaff`: Cho phép Admin và Nhân viên quầy trực.
+- `authorizeDocGia`: Cho phép độc giả thực hiện các hành động cá nhân (gửi yêu cầu mượn, xem phiếu mượn của chính mình).
 
 ---
 
 ## 9. QUY TRÌNH KIỂM THỬ HOÀN THIỆN (DEFINITION OF DONE)
 
 Một AI Agent sau khi hoàn thành phải đảm bảo kiểm tra đạt các tiêu chí sau:
-1. `npm run build` ở thư mục `Frontend` thành công không có lỗi cú pháp hay import.
-2. Đăng nhập tài khoản Admin (`ADMIN001` / `admin123`) ➔ Tự động chuyển hướng vào `/admin`, thấy đầy đủ menu Quản lý Nhân viên.
-3. Đăng nhập tài khoản Nhân viên thường ➔ Tự động chuyển hướng vào `/staff`, menu không có Quản lý nhân viên, nếu cố gõ URL `/admin` sẽ bị chặn chuyển về `/staff`.
-4. Thực hiện mượn 1 cuốn sách: Số lượng tồn kho giảm 1.
-5. Thực hiện trả sách sau ngày hạn trả: Hệ thống tự động tính ra số ngày trễ và hiển thị đúng số tiền phạt.
-6. Tìm kiếm sách theo từ khóa và lọc theo Thể loại / NXB hoạt động mượt mà.
+1. `npm run build` ở thư mục `Frontend` thành công không có bất kỳ lỗi cú pháp nào.
+2. **Độc giả:**
+   - Đăng ký tài khoản độc giả mới thành công và có thể đăng nhập được ngay.
+   - Chọn sách và gửi yêu cầu mượn ➔ Tạo phiếu mượn ở trạng thái "Chờ duyệt" (`ChoDuyet`).
+   - Độc giả theo dõi được danh sách mượn và lịch sử phạt của mình.
+3. **Thủ thư / Admin duyệt mượn:**
+   - Trong danh sách mượn sách xuất hiện tab "Chờ duyệt" có phiếu của độc giả.
+   - Bấm "Duyệt" ➔ Phiếu chuyển sang "Đang mượn", kho sách tự động giảm 1 quyển.
+   - Hoặc bấm "Từ chối" ➔ Phiếu chuyển sang "Từ chối", kho sách không bị giảm.
+4. **Trả sách & Phạt hư hại:**
+   - Trả sách quá hạn ➔ Tự động tính đúng tiền phạt theo số ngày trễ (hoặc tịch thu cọc nếu quá 30 ngày).
+   - Nhập tiền phạt hư hại sách (ví dụ: làm rách sách phạt 30.000đ, kèm ghi chú lý do) ➔ Lưu chính xác vào `TIENPHATHUHAI` và `GHICHUHUHAI`.
+   - Tổng tiền phạt = Phạt trễ hạn + Phạt hư hại. Tiền cọc được trừ và hoàn trả chính xác.
+   - Sách được hoàn lại vào kho (`SOQUYEN += 1`).
+5. **Phân quyền chặt chẽ:** Admin có toàn quyền xem Dashboard và Nhân viên; Thủ thư quản lý mượn trả và sách; Độc giả chỉ thao tác trên không gian tra cứu và mượn sách cá nhân.
