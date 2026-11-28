@@ -25,10 +25,12 @@ const {
 router.use(authenticate);
 
 // Route dành cho Độc Giả:
-// Độc giả gửi yêu cầu mượn sách trực tuyến (trạng thái Chờ Duyệt)
+// 1. Độc giả gửi yêu cầu mượn sách trực tuyến (trạng thái Chờ Duyệt)
 router.post("/yeu-cau", yeuCauMuonSach);
-// Độc giả xem danh sách phiếu mượn của chính mình
+// 2. Độc giả xem danh sách phiếu mượn của chính mình
 router.get("/cua-toi", getMyLoans);
+// 3. Độc giả CÓ THỂ TRẢ SÁCH của chính mình (và Thủ thư cũng dùng endpoint này để nhận trả)
+router.put("/:id/tra", traSach);
 
 // Các route bên dưới dành riêng cho Nhân Viên và Admin:
 router.use(authorizeAdminOrStaff);
@@ -37,7 +39,6 @@ router.get("/tre-han", getSachTreHan);
 router.post("/muon", muonSach);
 router.put("/:id/duyet", duyetMuonSach);
 router.put("/:id/tu-choi", tuChoiMuonSach);
-router.put("/:id/tra", traSach);
 
 router.get("/", getAllTheoDoiMuonSach);
 router.get("/:id", getTheoDoiMuonSachById);

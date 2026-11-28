@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
 
 const DocGiaSchema = new mongoose.Schema(
   {
@@ -23,13 +22,5 @@ const DocGiaSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-
-DocGiaSchema.methods.comparePassword = async function (candidatePassword) {
-  if (!this.PASSWORD) return false;
-  if (this.PASSWORD.startsWith("$2a$") || this.PASSWORD.startsWith("$2b$")) {
-    return bcrypt.compare(candidatePassword, this.PASSWORD);
-  }
-  return candidatePassword === this.PASSWORD;
-};
 
 module.exports = mongoose.model("DocGia", DocGiaSchema);

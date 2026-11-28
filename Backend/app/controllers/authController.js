@@ -145,8 +145,8 @@ const registerDocGia = async (req, res) => {
       }
     }
 
-    // Mã hóa mật khẩu
-    const hashedPassword = await bcrypt.hash(PASSWORD.trim(), 10);
+    // Mật khẩu lưu trực tiếp không cần hash
+    const plainPassword = PASSWORD.trim();
 
     const newDocGia = new DocGia({
       MADOCGIA,
@@ -156,7 +156,7 @@ const registerDocGia = async (req, res) => {
       PHAI: PHAI || "Nam",
       DIACHI: DIACHI.trim(),
       DIENTHOAI: DIENTHOAI.trim(),
-      PASSWORD: hashedPassword,
+      PASSWORD: plainPassword,
       TRANGTHAI: "HoatDong",
     });
 
@@ -208,7 +208,11 @@ const loginDocGia = async (req, res) => {
       });
     }
 
-    const isMatch = await docGia.comparePassword(password);
+    // So sánh mật khẩu trực tiếp (hỗ trợ cả hash cũ nếu có)
+    const isMatch =
+      docGia.PASSWORD === password ||
+      (docGia.PASSWORD && docGia.PASSWORD.startsWith("$2") && bcrypt.compareSync(password, docGia.PASSWORD));
+
     if (!isMatch) {
       return res.status(401).json({
         message: "Mật khẩu không chính xác.",

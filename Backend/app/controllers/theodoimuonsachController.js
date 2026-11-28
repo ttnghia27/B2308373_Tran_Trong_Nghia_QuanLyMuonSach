@@ -427,6 +427,16 @@ const traSach = async (req, res) => {
       return res.status(404).json({ message: "Không tìm thấy phiếu mượn." });
     }
 
+    // Nếu người thực hiện là Độc Giả: chỉ được phép trả sách của chính mình
+    if (req.userRole === "DocGia" || req.DocGia) {
+      const readerId = req.DocGia?.MADOCGIA;
+      if (readerId && phieu.MADOCGIA !== readerId) {
+        return res.status(403).json({
+          message: "Bạn không có quyền trả phiếu mượn của độc giả khác.",
+        });
+      }
+    }
+
     const ngayTra = new Date();
     const diffMs = startOfDay(ngayTra) - startOfDay(new Date(phieu.NGAYHENTRA));
     const ngayTre = Math.max(0, Math.ceil(diffMs / MILLISECONDS_PER_DAY));

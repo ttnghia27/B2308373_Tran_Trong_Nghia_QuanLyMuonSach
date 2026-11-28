@@ -273,8 +273,9 @@
                 <th class="py-3 px-3.5">Hạn Trả</th>
                 <th class="py-3 px-3.5">Ngày Trả</th>
                 <th class="py-3 px-3.5">Tiền Cọc</th>
-                <th class="py-3 px-3.5">Tiền Phạt (Trễ & Hư sách)</th>
+                <th class="py-3 px-3.5">Tiền Phạt</th>
                 <th class="py-3 px-3.5">Trạng Thái</th>
+                <th class="py-3 px-3.5 text-right">Thao Tác</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border-base">
@@ -300,7 +301,7 @@
                 </td>
                 <td class="py-3 px-3.5">{{ formatCurrency(item.TIENCOC) }}</td>
 
-                <!-- Tiền phạt tổng cộng (đã gộp trễ hạn và hư sách) -->
+                <!-- Tiền phạt tổng cộng -->
                 <td class="py-3 px-3.5">
                   <span v-if="item.TIENPHAT > 0" class="text-danger font-bold">
                     {{ formatCurrency(item.TIENPHAT) }}
@@ -319,12 +320,94 @@
                     {{ item.TRANGTHAI }}
                   </span>
                 </td>
+
+                <!-- Độc giả có thể trả sách trực tiếp -->
+                <td class="py-3 px-3.5 text-right whitespace-nowrap">
+                  <button
+                    v-if="item.TRANGTHAI === 'Đang Mượn' || item.TRANGTHAI === 'Trễ Hạn'"
+                    type="button"
+                    @click="openReturnModal(item)"
+                    class="px-3 py-1.5 rounded-btn bg-primary hover:bg-primary-hover active:bg-primary-active text-btn-text text-xs font-bold shadow-sm transition inline-flex items-center gap-1.5"
+                    title="Trả sách này"
+                  >
+                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                    <span>Trả sách</span>
+                  </button>
+                  <span v-else class="text-text-muted text-[11px]">-</span>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
     </section>
+
+    <!-- Modal Độc Giả Trả Sách -->
+    <div
+      v-if="returningItem"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      @click.self="returningItem = null"
+    >
+      <div class="w-full max-w-md rounded-card bg-bg-card p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-border-subtle">
+          <h3 class="font-bold text-base flex items-center gap-2">
+            <i class="fa-solid fa-arrow-rotate-left text-primary"></i> Trả Sách Thư Viện
+          </h3>
+          <button @click="returningItem = null" class="text-text-muted hover:text-text-label">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="space-y-2 text-xs bg-bg-page p-3 rounded-xl border border-border-subtle">
+          <p>Tên sách: <strong>{{ returningItem.SACH_INFO?.TENSACH || returningItem.MASACH }}</strong></p>
+          <p>Hạn trả: <span class="font-semibold">{{ formatDate(returningItem.NGAYHENTRA) }}</span></p>
+          <p>Tiền cọc lúc mượn: <strong class="text-primary">{{ formatCurrency(returningItem.TIENCOC) }}</strong></p>
+        </div>
+
+        <!-- Cảnh báo nếu trễ hạn -->
+        <div v-if="readerReturnLateDays > 30" class="p-3 rounded-xl bg-danger-bg border border-danger-border text-danger text-xs space-y-1">
+          <p class="font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Quá hạn {{ readerReturnLateDays }} ngày (> 30 ngày)
+          </p>
+          <p>Quy định: Tịch thu toàn bộ tiền cọc: <strong>{{ formatCurrency(returningItem.TIENCOC) }}</strong></p>
+        </div>
+
+        <div v-else-if="readerReturnLateDays > 0" class="p-3 rounded-xl bg-warning-bg border border-warning-border text-warning text-xs space-y-1">
+          <p class="font-bold flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            Trễ hạn {{ readerReturnLateDays }} ngày
+          </p>
+          <p>Tiền phạt (5.000đ/ngày): <strong class="text-danger">{{ formatCurrency(readerReturnLateFine) }}</strong></p>
+          <p>Tiền cọc hoàn trả dự kiến: <strong class="text-success">{{ formatCurrency(Math.max(0, Number(returningItem.TIENCOC) - readerReturnLateFine)) }}</strong></p>
+        </div>
+
+        <div v-else class="p-3 rounded-xl bg-success-bg border border-success-border text-success text-xs flex items-center gap-2">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>Bạn đang trả sách đúng hạn! Tiền cọc sẽ được hoàn trả đầy đủ.</span>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-border-subtle">
+          <button
+            type="button"
+            @click="returningItem = null"
+            class="px-4 py-2 rounded-btn border border-border-base text-xs font-semibold text-text-label hover:bg-bg-page"
+          >
+            Hủy
+          </button>
+          <button
+            type="button"
+            @click="confirmReaderReturn"
+            :disabled="isReturning"
+            class="px-4 py-2 rounded-btn bg-primary hover:bg-primary-hover text-btn-text text-xs font-bold shadow transition flex items-center gap-1.5"
+          >
+            <i v-if="isReturning" class="fa-solid fa-spinner fa-spin"></i>
+            <i v-else class="fa-solid fa-check"></i>
+            Xác nhận trả sách
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal Xác Nhận Gửi Yêu Cầu Mượn Sách -->
     <div
@@ -410,12 +493,16 @@ const myLoans = ref([]);
 const isBooksLoading = ref(false);
 const isLoansLoading = ref(false);
 const isSubmittingRequest = ref(false);
+const isReturning = ref(false);
 
 const bookSearch = ref("");
 const selectedCategory = ref("");
 const requestingBook = ref(null);
+const returningItem = ref(null);
 const borrowDuration = ref(14);
 const alertMessage = ref({ type: "", text: "" });
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // --- Helpers ---
 const formatCurrency = (val) =>
@@ -532,6 +619,20 @@ const filteredMyLoans = computed(() => {
   return myLoans.value.filter(filterFn);
 });
 
+// Tính số ngày trễ hạn và phạt trễ của độc giả khi trả sách
+const readerReturnLateDays = computed(() => {
+  if (!returningItem.value?.NGAYHENTRA) return 0;
+  const diffMs = startOfDay(new Date()) - startOfDay(new Date(returningItem.value.NGAYHENTRA));
+  return Math.max(0, Math.ceil(diffMs / MS_PER_DAY));
+});
+
+const readerReturnLateFine = computed(() => {
+  if (readerReturnLateDays.value > 30) {
+    return Number(returningItem.value?.TIENCOC) || 100000;
+  }
+  return readerReturnLateDays.value * 5000;
+});
+
 // --- Actions ---
 const fetchBooks = async () => {
   try {
@@ -568,6 +669,11 @@ const openRequestModal = (book) => {
   borrowDuration.value = 14;
 };
 
+const openReturnModal = (item) => {
+  returningItem.value = item;
+};
+
+// Độc giả gửi yêu cầu mượn
 const confirmBorrowRequest = async () => {
   if (!requestingBook.value) return;
   try {
@@ -594,6 +700,25 @@ const confirmBorrowRequest = async () => {
     alert(err.response?.data?.message || err.message || "Lỗi khi gửi yêu cầu mượn sách");
   } finally {
     isSubmittingRequest.value = false;
+  }
+};
+
+// Độc giả tự xác nhận trả sách
+const confirmReaderReturn = async () => {
+  if (!returningItem.value) return;
+  try {
+    isReturning.value = true;
+    const res = await theodoimuonsachService.traSach(returningItem.value._id);
+    alertMessage.value = {
+      type: "success",
+      text: res.message || "Trả sách thành công!",
+    };
+    returningItem.value = null;
+    await Promise.all([fetchBooks(), fetchMyLoans()]);
+  } catch (err) {
+    alert(err.response?.data?.message || err.message || "Lỗi khi trả sách");
+  } finally {
+    isReturning.value = false;
   }
 };
 
