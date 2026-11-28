@@ -22,7 +22,9 @@
         class="rounded-card border border-border-base bg-bg-card p-8 shadow-card"
       >
         <!-- Role Tabs -->
-        <div class="grid grid-cols-2 gap-1.5 p-1 bg-bg-input rounded-input mb-6">
+        <div
+          class="grid grid-cols-2 gap-1.5 p-1 bg-bg-input rounded-input mb-6"
+        >
           <button
             type="button"
             @click="switchTab('staff')"
@@ -33,8 +35,7 @@
                 : 'text-text-muted hover:text-text-main'
             "
           >
-            <i class="fa-solid fa-user-tie"></i>
-            <span>Nhân Viên / Quản Trị</span>
+            <span>Admin / Nhân Viên</span>
           </button>
           <button
             type="button"
@@ -46,7 +47,6 @@
                 : 'text-text-muted hover:text-text-main'
             "
           >
-            <i class="fa-solid fa-book-reader"></i>
             <span>Độc Giả</span>
           </button>
         </div>
@@ -56,21 +56,25 @@
           <div>
             <label
               for="login-id"
-              class="block text-xs font-bold uppercase tracking-wider text-text-label pb-2"
+              class="block text-xs font-bold uppercase tracking-wider text-text-label py-2"
             >
-              {{ activeTab === 'staff' ? 'Mã số nhân viên (MSNV)' : 'Mã độc giả hoặc Số điện thoại' }}
+              {{ activeTab === "staff" ? "Mã số nhân viên" : "Mã độc giả" }}
             </label>
             <div class="relative">
               <span
                 class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-sm"
               >
-                <i :class="activeTab === 'staff' ? 'fa-solid fa-id-badge' : 'fa-solid fa-user'"></i>
+                <i class="fa-solid fa-user"></i>
               </span>
               <input
                 id="login-id"
                 v-model.trim="username"
                 type="text"
-                :placeholder="activeTab === 'staff' ? 'Nhập MSNV (ví dụ: ADMIN001)' : 'Nhập Mã độc giả hoặc SĐT'"
+                :placeholder="
+                  activeTab === 'staff'
+                    ? 'Nhập mã số nhân viên '
+                    : 'Nhập mã độc giả'
+                "
                 required
                 autofocus
                 class="w-full rounded-input border border-border-input bg-bg-input pl-10 pr-4 py-3 text-sm text-text-main placeholder-text-muted outline-none transition focus:bg-bg-card focus:border-primary focus:ring-2 focus:ring-primary/15"
@@ -82,7 +86,7 @@
           <div>
             <label
               for="password"
-              class="block text-xs font-bold uppercase tracking-wider text-text-label pb-2"
+              class="block text-xs font-bold uppercase tracking-wider text-text-label py-2"
             >
               Mật khẩu
             </label>
@@ -119,7 +123,6 @@
             <div
               class="p-3 rounded-input bg-danger-bg border border-danger-border text-danger text-xs flex items-center gap-2"
             >
-              <i class="fa-solid fa-circle-exclamation shrink-0"></i>
               <span>{{ errorMessage }}</span>
             </div>
           </div>
@@ -135,13 +138,7 @@
                 v-if="isLoading"
                 class="fa-solid fa-spinner fa-spin text-base"
               ></i>
-              <span>{{
-                isLoading
-                  ? "Đang xác thực..."
-                  : activeTab === 'staff'
-                    ? "Đăng Nhập Quản Trị"
-                    : "Đăng Nhập Độc Giả"
-              }}</span>
+              <span>Đăng Nhập</span>
             </button>
           </div>
         </form>
@@ -151,13 +148,11 @@
           v-if="activeTab === 'reader'"
           class="mt-6 pt-4 border-t border-border-subtle text-center text-xs text-text-muted"
         >
-          Bạn chưa có thẻ thư viện?
           <RouterLink
             to="/register"
             class="font-bold text-primary hover:underline ml-1 inline-flex items-center gap-1"
           >
-            <span>Đăng ký thẻ độc giả ngay</span>
-            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            <span>Đăng Ký</span>
           </RouterLink>
         </div>
       </div>

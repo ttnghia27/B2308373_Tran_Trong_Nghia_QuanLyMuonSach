@@ -56,6 +56,17 @@ const getThongKeTongQuan = async (req, res) => {
       0
     );
 
+    // Tiền cọc thu thực tế khi phiếu đã được duyệt/cho mượn.
+    // Không tính yêu cầu chờ duyệt hoặc phiếu bị từ chối.
+    const totalDepositCollected = allMuonSach.reduce(
+      (acc, p) =>
+        acc +
+        (["Đang Mượn", "Trễ Hạn", "Đã Trả"].includes(p.TRANGTHAI)
+          ? p.TIENCOC || 0
+          : 0),
+      0
+    );
+
     // Lấy 6 hoạt động gần nhất
     const recentActivities = allMuonSach.slice(0, 6);
 
@@ -89,6 +100,7 @@ const getThongKeTongQuan = async (req, res) => {
       overdueCount,
       confiscatedDepositCount,
       totalFineCollected,
+      totalDepositCollected,
       recentActivities,
       topBooks,
     });
@@ -100,6 +112,103 @@ const getThongKeTongQuan = async (req, res) => {
   }
 };
 
+const getThuTheoThoiGian = async (req, res) => {
+  try {
+    const period = ["day", "month", "year"].includes(req.query.period)
+      ? req.query.period
+      : "month";
+    let start;
+    let end;
+    let bucketCount;
+    let getBucketIndex;
+    let getLabel;
+
+    if (period === "day") {
+      const dateValue = req.query.date
+        ? new Date(`${req.query.date}T00:00:00`)
+        : new Date();
+      start = new Date(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate());
+      end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      bucketCount = 24;
+      getBucketIndex = (date) => new Date(date).getHours();
+      getLabel = (index) => `${index}h`;
+    } else if (period === "month") {
+      const match = /^(\d{4})-(\d{2})$/.exec(req.query.month || "");
+      const year = match ? Number(match[1]) : new Date().getFullYear();
+      const month = match ? Number(match[2]) - 1 : new Date().getMonth();
+      start = new Date(year, month, 1);
+      end = new Date(year, month + 1, 1);
+      bucketCount = new Date(year, month + 1, 0).getDate();
+      getBucketIndex = (date) => new Date(date).getDate() - 1;
+      getLabel = (index) => `${index + 1}`;
+    } else {
+      const year = Number(req.query.year) || new Date().getFullYear();
+      start = new Date(year, 0, 1);
+      end = new Date(year + 1, 0, 1);
+      bucketCount = 12;
+      getBucketIndex = (date) => new Date(date).getMonth();
+      getLabel = (index) => `T${index + 1}`;
+    }
+
+    const records = await TheoDoiMuonSach.find({
+      $or: [
+        { NGAYMUON: { $gte: start, $lt: end } },
+        { NGAYTRA: { $gte: start, $lt: end } },
+      ],
+    });
+
+    const chart = Array.from({ length: bucketCount }, (_, index) => ({
+      label: getLabel(index),
+      deposit: 0,
+      fine: 0,
+      total: 0,
+    }));
+
+    records.forEach((record) => {
+      if (
+        ["Đang Mượn", "Trễ Hạn", "Đã Trả"].includes(record.TRANGTHAI) &&
+        record.NGAYMUON &&
+        new Date(record.NGAYMUON) >= start &&
+        new Date(record.NGAYMUON) < end
+      ) {
+        const index = getBucketIndex(record.NGAYMUON);
+        chart[index].deposit += Number(record.TIENCOC) || 0;
+      }
+
+      if (
+        record.TRANGTHAI === "Đã Trả" &&
+        record.NGAYTRA &&
+        new Date(record.NGAYTRA) >= start &&
+        new Date(record.NGAYTRA) < end
+      ) {
+        const index = getBucketIndex(record.NGAYTRA);
+        chart[index].fine += Number(record.TIENPHAT) || 0;
+      }
+    });
+
+    chart.forEach((bucket) => {
+      bucket.total = bucket.deposit + bucket.fine;
+    });
+
+    res.status(200).json({
+      period,
+      start,
+      end,
+      chart,
+      depositTotal: chart.reduce((sum, bucket) => sum + bucket.deposit, 0),
+      fineTotal: chart.reduce((sum, bucket) => sum + bucket.fine, 0),
+      grandTotal: chart.reduce((sum, bucket) => sum + bucket.total, 0),
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Không thể thống kê tiền thu theo thời gian.",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getThongKeTongQuan,
+  getThuTheoThoiGian,
 };

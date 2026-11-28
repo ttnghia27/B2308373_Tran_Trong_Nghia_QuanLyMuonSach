@@ -165,7 +165,15 @@
               </td>
 
               <!-- Tiền cọc -->
-              <td class="py-3 px-3.5">{{ formatCurrency(item.TIENCOC) }}</td>
+              <td class="py-3 px-3.5">
+                <template v-if="item.TRANGTHAI === 'Chờ Duyệt' || item.TRANGTHAI === 'Từ Chối'">
+                  <span class="text-text-muted">-</span>
+                </template>
+                <template v-else>
+                  <span class="font-bold text-primary">{{ formatCurrency(item.TIENCOC) }}</span>
+                  <span class="block text-[10px] text-text-muted">Đã thu lúc cho mượn</span>
+                </template>
+              </td>
 
               <!-- Tiền phạt -->
               <td class="py-3 px-3.5">
@@ -704,7 +712,7 @@ const TABLE_HEADERS = [
   "Ngày Mượn",
   "Hạn Trả",
   "Ngày Trả",
-  "Tiền Cọc",
+  "Tiền Thu Khi Cho Mượn",
   "Phạt",
   "Trạng Thái",
   "Thao Tác",
@@ -988,7 +996,9 @@ const handleBorrowBook = async () => {
 
     borrowMessage.value = {
       type: "success",
-      text: result.message || "Lập phiếu mượn sách thành công!",
+      text: result.message
+        ? `${result.message}${result.phieu?.TIENCOC ? ` Đã thu tiền cọc: ${formatCurrency(result.phieu.TIENCOC)}.` : ""}`
+        : "Lập phiếu mượn sách thành công!",
     };
     borrowForm.value.MADOCGIA = "";
     borrowForm.value.MASACH = "";
