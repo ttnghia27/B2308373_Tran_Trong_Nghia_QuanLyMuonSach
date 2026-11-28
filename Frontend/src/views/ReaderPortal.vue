@@ -2,17 +2,15 @@
   <div class="space-y-6 font-sans text-text-main">
     <!-- Header Banner -->
     <div
-      class="rounded-card bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-border-base p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      class="rounded-card bg-primary/10 border border-border-base p-6 flex flex-col sm:flex-row sm:items-center justify-between"
     >
       <div>
-        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/20 text-primary">
-          Cổng Dịch Vụ Độc Giả
-        </span>
-        <h1 class="text-2xl font-black tracking-tight mt-1">
-          Xin chào, {{ auth.displayName || "Bạn đọc" }}!
-        </h1>
         <p class="text-xs text-text-muted mt-0.5">
-          Mã thẻ độc giả: <strong class="text-primary">{{ auth.user?.MADOCGIA || "DG..." }}</strong> | Tra cứu kho sách và theo dõi lịch sử mượn trả
+          Mã thẻ độc giả:
+          <strong class="text-primary">{{
+            auth.user?.MADOCGIA || "DG..."
+          }}</strong>
+          | Tra cứu kho sách và theo dõi lịch sử mượn trả
         </p>
       </div>
 
@@ -27,7 +25,6 @@
               : 'bg-bg-card hover:bg-bg-input text-text-label border border-border-base'
           "
         >
-          <i class="fa-solid fa-book-open"></i>
           <span>Kho Sách Thư Viện</span>
         </button>
 
@@ -41,7 +38,6 @@
               : 'bg-bg-card hover:bg-bg-input text-text-label border border-border-base'
           "
         >
-          <i class="fa-solid fa-clock-rotate-left"></i>
           <span>Phiếu Mượn Của Tôi</span>
           <span
             v-if="pendingCount > 0"
@@ -83,7 +79,7 @@
     <!-- TAB 1: KHO SÁCH & GỬI YÊU CẦU MƯỢN -->
     <section v-if="activeMainTab === 'books'" class="space-y-4">
       <!-- Thanh tìm kiếm & lọc thể loại -->
-      <div class="flex flex-col sm:flex-row gap-2.5">
+      <div class="flex flex-col sm:flex-row gap-2.5 py-3">
         <div class="relative flex-1">
           <i
             class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-xs"
@@ -110,19 +106,13 @@
             {{ tl.TENTL || tl.TENTHELOAI }}
           </option>
         </select>
-
-        <button
-          type="button"
-          @click="fetchBooks"
-          class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-btn bg-bg-input hover:bg-border-base text-text-label text-xs font-bold transition"
-        >
-          <i class="fa-solid fa-rotate-right" :class="{ 'fa-spin': isBooksLoading }"></i>
-          <span>Làm mới</span>
-        </button>
       </div>
 
       <!-- Danh sách sách (Grid Card) -->
-      <div v-if="isBooksLoading" class="py-12 text-center text-text-muted text-xs">
+      <div
+        v-if="isBooksLoading"
+        class="py-12 text-center text-text-muted text-xs"
+      >
         <i class="fa-solid fa-spinner fa-spin text-lg mb-2 block"></i>
         Đang tải danh mục sách...
       </div>
@@ -131,7 +121,8 @@
         v-else-if="!filteredBooks.length"
         class="py-12 text-center text-text-muted bg-bg-card rounded-card border border-border-base text-xs"
       >
-        Không tìm thấy cuốn sách nào phù hợp với bộ lọc thể loại hoặc từ khóa tìm kiếm.
+        Không tìm thấy cuốn sách nào phù hợp với bộ lọc thể loại hoặc từ khóa
+        tìm kiếm.
       </div>
 
       <div
@@ -177,12 +168,18 @@
             </span>
 
             <!-- Book Info -->
-            <h3 class="font-bold text-sm text-text-main line-clamp-2 leading-snug">
+            <h3
+              class="font-bold text-sm text-text-main line-clamp-2 leading-snug"
+            >
               {{ book.TENSACH }}
             </h3>
             <p class="text-xs text-text-muted mt-1 flex items-center gap-1.5">
-              <i class="fa-solid fa-user-pen text-[10px]"></i>
-              <span>{{ book["NGUONGOC/TACGIA"] || book.TACGIA || "Đang cập nhật" }}</span>
+              <span
+                >Nguồn góc/ tác giả:
+                {{
+                  book["NGUONGOC/TACGIA"] || book.TACGIA || "Đang cập nhật"
+                }}</span
+              >
             </p>
             <p class="text-[11px] text-text-muted mt-0.5">
               Năm XB: {{ book.NAMXUATBAN || "-" }} | Mã: {{ book.MASACH }}
@@ -190,10 +187,15 @@
           </div>
 
           <!-- Bottom Price & Borrow Button -->
-          <div class="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
+          <div
+            class="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between"
+          >
             <div>
-              <span class="block text-[10px] uppercase tracking-wider text-text-muted">Tiền cọc</span>
-              <span class="text-xs font-bold text-primary">
+              <span
+                class="block text-[10px] uppercase tracking-wider text-text-muted"
+                >Tiền cọc</span
+              >
+              <span class="text-xs font-bold">
                 {{ formatCurrency(book.TIENCOC || book.DONGIA || 50000) }}
               </span>
             </div>
@@ -209,7 +211,6 @@
                   : 'bg-bg-input text-text-muted cursor-not-allowed'
               "
             >
-              <i class="fa-solid fa-hand-holding-hand"></i>
               <span>{{ book.SOQUYEN > 0 ? "Mượn sách" : "Hết sách" }}</span>
             </button>
           </div>
@@ -218,7 +219,7 @@
     </section>
 
     <!-- TAB 2: PHIẾU MƯỢN CỦA TÔI -->
-    <section v-else class="space-y-4">
+    <section v-else class="space-y-4 py-3">
       <!-- Bộ lọc trạng thái phiếu mượn của độc giả -->
       <div class="flex flex-wrap gap-2 border-b border-border-subtle pb-3">
         <button
@@ -247,8 +248,10 @@
         </button>
       </div>
 
-      <div v-if="isLoansLoading" class="py-12 text-center text-text-muted text-xs">
-        <i class="fa-solid fa-spinner fa-spin text-lg mb-2 block"></i>
+      <div
+        v-if="isLoansLoading"
+        class="py-12 text-center text-text-muted text-xs"
+      >
         Đang tải lịch sử mượn sách...
       </div>
 
@@ -267,7 +270,9 @@
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
             <thead>
-              <tr class="uppercase font-sans tracking-wider border-b bg-bg-input/50 text-text-label">
+              <tr
+                class="uppercase font-sans tracking-wider border-b bg-bg-input/50 text-text-label"
+              >
                 <th class="py-3 px-3.5">Tên Sách</th>
                 <th class="py-3 px-3.5">Ngày Mượn</th>
                 <th class="py-3 px-3.5">Hạn Trả</th>
@@ -275,7 +280,6 @@
                 <th class="py-3 px-3.5">Tiền Cọc</th>
                 <th class="py-3 px-3.5">Tiền Phạt</th>
                 <th class="py-3 px-3.5">Trạng Thái</th>
-                <th class="py-3 px-3.5 text-right">Thao Tác</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-border-base">
@@ -286,8 +290,12 @@
               >
                 <!-- Sách -->
                 <td class="py-3 px-3.5">
-                  <span class="font-bold block text-text-main">{{ item.SACH_INFO?.TENSACH || item.MASACH }}</span>
-                  <span class="text-[11px] text-text-muted">Mã: {{ item.MASACH }}</span>
+                  <span class="font-bold block text-text-main">{{
+                    item.SACH_INFO?.TENSACH || item.MASACH
+                  }}</span>
+                  <span class="text-[11px] text-text-muted"
+                    >Mã: {{ item.MASACH }}</span
+                  >
                 </td>
 
                 <td class="py-3 px-3.5">{{ formatDate(item.NGAYMUON) }}</td>
@@ -303,20 +311,15 @@
 
                 <!-- Tiền phạt tổng cộng -->
                 <td class="py-3 px-3.5">
-                  <span v-if="item.TIENPHAT > 0" class="text-danger font-bold">
+                  <span v-if="item.TIENPHAT > 0">
                     {{ formatCurrency(item.TIENPHAT) }}
                   </span>
-                  <span v-else class="text-text-muted">
-                    0 đ
-                  </span>
+                  <span v-else class="text-text-muted"> 0 đ </span>
                 </td>
 
                 <!-- Trạng thái -->
                 <td class="py-3 px-3.5">
-                  <span
-                    class="px-2 py-0.5 rounded text-[11px] font-bold inline-block"
-                    :class="getStatusClass(item)"
-                  >
+                  <span>
                     {{ item.TRANGTHAI }}
                   </span>
                 </td>
@@ -324,7 +327,10 @@
                 <!-- Độc giả có thể trả sách trực tiếp -->
                 <td class="py-3 px-3.5 text-right whitespace-nowrap">
                   <button
-                    v-if="item.TRANGTHAI === 'Đang Mượn' || item.TRANGTHAI === 'Trễ Hạn'"
+                    v-if="
+                      item.TRANGTHAI === 'Đang Mượn' ||
+                      item.TRANGTHAI === 'Trễ Hạn'
+                    "
                     type="button"
                     @click="openReturnModal(item)"
                     class="px-3 py-1.5 rounded-btn bg-primary hover:bg-primary-hover active:bg-primary-active text-btn-text text-xs font-bold shadow-sm transition inline-flex items-center gap-1.5"
@@ -348,46 +354,102 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       @click.self="returningItem = null"
     >
-      <div class="w-full max-w-md rounded-card bg-bg-card p-6 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-border-subtle">
+      <div
+        class="w-full max-w-md rounded-card bg-bg-card p-6 shadow-2xl space-y-4"
+      >
+        <div
+          class="flex items-center justify-between pb-3 border-b border-border-subtle"
+        >
           <h3 class="font-bold text-base flex items-center gap-2">
-            <i class="fa-solid fa-arrow-rotate-left text-primary"></i> Trả Sách Thư Viện
+            <i class="fa-solid fa-arrow-rotate-left text-primary"></i> Trả Sách
+            Thư Viện
           </h3>
-          <button @click="returningItem = null" class="text-text-muted hover:text-text-label">
+          <button
+            @click="returningItem = null"
+            class="text-text-muted hover:text-text-label"
+          >
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
-        <div class="space-y-2 text-xs bg-bg-page p-3 rounded-xl border border-border-subtle">
-          <p>Tên sách: <strong>{{ returningItem.SACH_INFO?.TENSACH || returningItem.MASACH }}</strong></p>
-          <p>Hạn trả: <span class="font-semibold">{{ formatDate(returningItem.NGAYHENTRA) }}</span></p>
-          <p>Tiền cọc lúc mượn: <strong class="text-primary">{{ formatCurrency(returningItem.TIENCOC) }}</strong></p>
+        <div
+          class="space-y-2 text-xs bg-bg-page p-3 rounded-xl border border-border-subtle"
+        >
+          <p>
+            Tên sách:
+            <strong>{{
+              returningItem.SACH_INFO?.TENSACH || returningItem.MASACH
+            }}</strong>
+          </p>
+          <p>
+            Hạn trả:
+            <span class="font-semibold">{{
+              formatDate(returningItem.NGAYHENTRA)
+            }}</span>
+          </p>
+          <p>
+            Tiền cọc lúc mượn:
+            <strong class="text-primary">{{
+              formatCurrency(returningItem.TIENCOC)
+            }}</strong>
+          </p>
         </div>
 
         <!-- Cảnh báo nếu trễ hạn -->
-        <div v-if="readerReturnLateDays > 30" class="p-3 rounded-xl bg-danger-bg border border-danger-border text-danger text-xs space-y-1">
+        <div
+          v-if="readerReturnLateDays > 30"
+          class="p-3 rounded-xl bg-danger-bg border border-danger-border text-danger text-xs space-y-1"
+        >
           <p class="font-bold flex items-center gap-1.5">
             <i class="fa-solid fa-triangle-exclamation"></i>
             Quá hạn {{ readerReturnLateDays }} ngày (> 30 ngày)
           </p>
-          <p>Quy định: Tịch thu toàn bộ tiền cọc: <strong>{{ formatCurrency(returningItem.TIENCOC) }}</strong></p>
+          <p>
+            Quy định: Tịch thu toàn bộ tiền cọc:
+            <strong>{{ formatCurrency(returningItem.TIENCOC) }}</strong>
+          </p>
         </div>
 
-        <div v-else-if="readerReturnLateDays > 0" class="p-3 rounded-xl bg-warning-bg border border-warning-border text-warning text-xs space-y-1">
+        <div
+          v-else-if="readerReturnLateDays > 0"
+          class="p-3 rounded-xl bg-warning-bg border border-warning-border text-warning text-xs space-y-1"
+        >
           <p class="font-bold flex items-center gap-1.5">
             <i class="fa-solid fa-circle-exclamation"></i>
             Trễ hạn {{ readerReturnLateDays }} ngày
           </p>
-          <p>Tiền phạt (5.000đ/ngày): <strong class="text-danger">{{ formatCurrency(readerReturnLateFine) }}</strong></p>
-          <p>Tiền cọc hoàn trả dự kiến: <strong class="text-success">{{ formatCurrency(Math.max(0, Number(returningItem.TIENCOC) - readerReturnLateFine)) }}</strong></p>
+          <p>
+            Tiền phạt (5.000đ/ngày):
+            <strong class="text-danger">{{
+              formatCurrency(readerReturnLateFine)
+            }}</strong>
+          </p>
+          <p>
+            Tiền cọc hoàn trả dự kiến:
+            <strong class="text-success">{{
+              formatCurrency(
+                Math.max(
+                  0,
+                  Number(returningItem.TIENCOC) - readerReturnLateFine,
+                ),
+              )
+            }}</strong>
+          </p>
         </div>
 
-        <div v-else class="p-3 rounded-xl bg-success-bg border border-success-border text-success text-xs flex items-center gap-2">
+        <div
+          v-else
+          class="p-3 rounded-xl bg-success-bg border border-success-border text-success text-xs flex items-center gap-2"
+        >
           <i class="fa-solid fa-circle-check"></i>
-          <span>Bạn đang trả sách đúng hạn! Tiền cọc sẽ được hoàn trả đầy đủ.</span>
+          <span
+            >Bạn đang trả sách đúng hạn! Tiền cọc sẽ được hoàn trả đầy đủ.</span
+          >
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-border-subtle">
+        <div
+          class="flex items-center justify-end gap-2 pt-2 border-t border-border-subtle"
+        >
           <button
             type="button"
             @click="returningItem = null"
@@ -415,26 +477,54 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       @click.self="requestingBook = null"
     >
-      <div class="w-full max-w-md rounded-card bg-bg-card p-6 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-border-subtle">
+      <div
+        class="w-full max-w-md rounded-card bg-bg-card p-6 shadow-2xl space-y-4"
+      >
+        <div
+          class="flex items-center justify-between pb-3 border-b border-border-subtle"
+        >
           <h3 class="font-bold text-base flex items-center gap-2">
-            <i class="fa-solid fa-hand-holding-hand text-primary"></i> Đăng Ký Mượn Sách
+            Đăng Ký Mượn Sách
           </h3>
-          <button @click="requestingBook = null" class="text-text-muted hover:text-text-label">
+          <button
+            @click="requestingBook = null"
+            class="text-text-muted hover:text-text-label"
+          >
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
-        <div class="space-y-2 text-xs bg-bg-page p-3 rounded-xl border border-border-subtle">
-          <p>Tên sách: <strong>{{ requestingBook.TENSACH }}</strong></p>
-          <p>Mã sách: <span class="text-primary font-bold">{{ requestingBook.MASACH }}</span></p>
-          <p>Tác giả: <strong>{{ requestingBook["NGUONGOC/TACGIA"] || requestingBook.TACGIA || "-" }}</strong></p>
-          <p>Tiền cọc quy định: <strong class="text-primary">{{ formatCurrency(requestingBook.TIENCOC || requestingBook.DONGIA || 50000) }}</strong></p>
-          <p>Số quyển khả dụng: <span class="text-emerald-600 font-bold">{{ requestingBook.SOQUYEN }} quyển</span></p>
+        <div
+          class="space-y-2 text-xs bg-bg-page p-3 rounded-xl border border-border-subtle"
+        >
+          <p>
+            Tên sách: <strong>{{ requestingBook.TENSACH }}</strong>
+          </p>
+          <p>
+            Mã sách: <strong>{{ requestingBook.MASACH }}</strong>
+          </p>
+          <p>
+            Tác giả:
+            <strong>{{
+              requestingBook["NGUONGOC/TACGIA"] || requestingBook.TACGIA || "-"
+            }}</strong>
+          </p>
+          <p>
+            Tiền cọc quy định:
+            <strong>{{
+              formatCurrency(
+                requestingBook.TIENCOC || requestingBook.DONGIA || 50000,
+              )
+            }}</strong>
+          </p>
+          <p>
+            Số quyển khả dụng:
+            <strong>{{ requestingBook.SOQUYEN }} quyển</strong>
+          </p>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-text-label mb-1.5">
+          <label class="py-2 block text-xs font-bold text-text-label mb-1.5">
             Thời hạn mượn:
           </label>
           <select
@@ -442,16 +532,18 @@
             class="w-full p-2.5 rounded-input border border-border-input bg-bg-input text-xs outline-none focus:border-primary"
           >
             <option :value="7">7 ngày</option>
-            <option :value="14">14 ngày (Mặc định)</option>
+            <option :value="14">14 ngày</option>
             <option :value="21">21 ngày</option>
             <option :value="30">30 ngày</option>
           </select>
           <p class="text-[11px] text-text-muted mt-1.5 italic">
-            * Lưu ý: Khi gửi yêu cầu, số lượng sách sẽ được trừ trực tiếp và phiếu mượn ở trạng thái <strong>"Chờ duyệt"</strong>. Vui lòng đợi thủ thư phê duyệt để nhận sách.
+            * Lưu ý: Chờ thủ thư <strong>"phê duyệt"</strong> để nhận sách.
           </p>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-border-subtle">
+        <div
+          class="flex items-center justify-end gap-2 pt-2 border-border-subtle"
+        >
           <button
             type="button"
             @click="requestingBook = null"
@@ -465,7 +557,10 @@
             :disabled="isSubmittingRequest"
             class="px-4 py-2 rounded-btn bg-primary hover:bg-primary-hover text-btn-text text-xs font-bold shadow transition flex items-center gap-1.5"
           >
-            <i v-if="isSubmittingRequest" class="fa-solid fa-spinner fa-spin"></i>
+            <i
+              v-if="isSubmittingRequest"
+              class="fa-solid fa-spinner fa-spin"
+            ></i>
             <i v-else class="fa-solid fa-paper-plane"></i>
             Xác nhận gửi yêu cầu
           </button>
@@ -524,25 +619,6 @@ const isOverdue = (item) =>
   Boolean(item.NGAYHENTRA) &&
   startOfDay(item.NGAYHENTRA) < startOfDay(new Date());
 
-const getStatusClass = (item) => {
-  switch (item.TRANGTHAI) {
-    case "Chờ Duyệt":
-      return "bg-amber-500/15 text-amber-600 border border-amber-500/30";
-    case "Đang Mượn":
-      return isOverdue(item)
-        ? "bg-red-500/15 text-red-600 border border-red-500/30"
-        : "bg-blue-500/15 text-blue-600 border border-blue-500/30";
-    case "Trễ Hạn":
-      return "bg-red-500/15 text-red-600 border border-red-500/30";
-    case "Đã Trả":
-      return "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30";
-    case "Từ Chối":
-      return "bg-gray-500/15 text-gray-500 border border-gray-500/30";
-    default:
-      return "bg-bg-input text-text-label";
-  }
-};
-
 // --- Computed: Map Thể loại ---
 const categoryMap = computed(() => {
   const map = new Map();
@@ -556,23 +632,18 @@ const categoryMap = computed(() => {
 
 // --- Computed: Lọc sách kết hợp Thể loại (MATL) & Tìm kiếm từ khóa ---
 const filteredBooks = computed(() => {
-  return books.value.filter((b) => {
-    // Lọc theo thể loại
-    if (selectedCategory.value) {
-      const bookCategory = b.MATL || b.MATHELOAI;
-      if (bookCategory !== selectedCategory.value) {
-        return false;
-      }
-    }
+  const keyword = bookSearch.value.toLowerCase();
+  const category = selectedCategory.value;
 
-    // Lọc theo từ khóa tìm kiếm
-    if (!bookSearch.value) return true;
-    const kw = bookSearch.value.toLowerCase();
+  return books.value.filter((b) => {
+    const matchesCategory = !category || (b.MATL || b.MATHELOAI) === category;
+
     return (
-      b.TENSACH?.toLowerCase().includes(kw) ||
-      b.MASACH?.toLowerCase().includes(kw) ||
-      b["NGUONGOC/TACGIA"]?.toLowerCase().includes(kw) ||
-      b.TACGIA?.toLowerCase().includes(kw)
+      matchesCategory &&
+      (!keyword ||
+        [b.TENSACH, b.MASACH, b["NGUONGOC/TACGIA"], b.TACGIA].some((value) =>
+          value?.toLowerCase().includes(keyword),
+        ))
     );
   });
 });
@@ -585,7 +656,8 @@ const LOAN_FILTERS = {
   ALL: () => true,
   ChoDuyet: (i) => i.TRANGTHAI === "Chờ Duyệt",
   DangMuon: (i) => i.TRANGTHAI === "Đang Mượn" && !isOverdue(i),
-  TreHan: (i) => (i.TRANGTHAI === "Trễ Hạn" || isOverdue(i)) && i.TRANGTHAI !== "Đã Trả",
+  TreHan: (i) =>
+    (i.TRANGTHAI === "Trễ Hạn" || isOverdue(i)) && i.TRANGTHAI !== "Đã Trả",
   DaTra: (i) => i.TRANGTHAI === "Đã Trả",
   TuChoi: (i) => i.TRANGTHAI === "Từ Chối",
 };
@@ -622,7 +694,9 @@ const filteredMyLoans = computed(() => {
 // Tính số ngày trễ hạn và phạt trễ của độc giả khi trả sách
 const readerReturnLateDays = computed(() => {
   if (!returningItem.value?.NGAYHENTRA) return 0;
-  const diffMs = startOfDay(new Date()) - startOfDay(new Date(returningItem.value.NGAYHENTRA));
+  const diffMs =
+    startOfDay(new Date()) -
+    startOfDay(new Date(returningItem.value.NGAYHENTRA));
   return Math.max(0, Math.ceil(diffMs / MS_PER_DAY));
 });
 
@@ -684,20 +758,25 @@ const confirmBorrowRequest = async () => {
       MASACH: requestingBook.value.MASACH,
       SONGAYMUON: borrowDuration.value,
     });
-
     alertMessage.value = {
       type: "success",
-      text: res.message || "Đã gửi yêu cầu mượn sách thành công! Đã trừ 1 quyển tồn kho.",
+      text:
+        res.message ||
+        "Đã gửi yêu cầu mượn sách thành công. Vui lòng chờ nhân viên phê duyệt.",
     };
     requestingBook.value = null;
 
-    // Cập nhật lại số lượng sách và danh sách phiếu mượn
+    // Làm mới danh sách sách và phiếu mượn
     await Promise.all([fetchBooks(), fetchMyLoans()]);
     // Chuyển sang tab phiếu mượn để bạn đọc theo dõi
     activeMainTab.value = "loans";
     activeLoanSubTab.value = "ChoDuyet";
   } catch (err) {
-    alert(err.response?.data?.message || err.message || "Lỗi khi gửi yêu cầu mượn sách");
+    alert(
+      err.response?.data?.message ||
+        err.message ||
+        "Lỗi khi gửi yêu cầu mượn sách",
+    );
   } finally {
     isSubmittingRequest.value = false;
   }

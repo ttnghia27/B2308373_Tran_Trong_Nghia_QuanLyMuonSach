@@ -5,9 +5,12 @@
       class="pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
     >
       <div>
-        <h1 class="text-2xl font-extrabold tracking-tight">Theo Dõi Mượn Sách</h1>
+        <h1 class="text-2xl font-extrabold tracking-tight">
+          Theo Dõi Mượn Sách
+        </h1>
         <p class="text-xs text-text-muted mt-0.5">
-          Quản lý duyệt mượn trực tuyến, mượn tại quầy, trả sách và thu tiền phạt
+          Quản lý duyệt mượn trực tuyến, mượn tại quầy, trả sách và thu tiền
+          phạt
         </p>
       </div>
 
@@ -31,7 +34,10 @@
         <i class="fa-solid fa-circle-check"></i>
         {{ borrowMessage.text }}
       </span>
-      <button @click="borrowMessage.text = ''" class="text-success hover:opacity-75">
+      <button
+        @click="borrowMessage.text = ''"
+        class="text-success hover:opacity-75"
+      >
         <i class="fa-solid fa-xmark"></i>
       </button>
     </p>
@@ -82,12 +88,11 @@
           />
         </div>
         <button
-          type="button"
-          @click="fetchData"
-          class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-btn bg-bg-input hover:bg-border-base text-text-label text-xs font-bold transition"
+          type="submit"
+          class="p-2 rounded-btn bg-primary hover:bg-primary-hover text-btn-text text-xs font-bold flex items-center justify-center gap-2"
         >
-          <i class="fa-solid fa-rotate-right" :class="{ 'fa-spin': isLoading }"></i>
-          <span>Làm mới</span>
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <span>Tìm kiếm</span>
         </button>
       </form>
     </div>
@@ -99,7 +104,9 @@
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead>
-            <tr class="uppercase font-sans tracking-wider border-b bg-bg-input/50 text-text-label">
+            <tr
+              class="uppercase font-sans tracking-wider border-b bg-bg-input/50 text-text-label"
+            >
               <th
                 v-for="header in TABLE_HEADERS"
                 :key="header"
@@ -115,7 +122,8 @@
                 :colspan="TABLE_HEADERS.length"
                 class="py-8 text-center text-text-muted"
               >
-                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải dữ liệu...
+                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Đang tải dữ
+                liệu...
               </td>
             </tr>
 
@@ -136,8 +144,12 @@
             >
               <!-- Sách -->
               <td class="py-3 px-3.5">
-                <span class="font-bold block text-text-main">{{ item.SACH_INFO?.TENSACH || item.MASACH }}</span>
-                <span class="text-[11px] text-text-muted">Mã: {{ item.MASACH }}</span>
+                <span class="font-bold block text-text-main">{{
+                  item.SACH_INFO?.TENSACH || item.MASACH
+                }}</span>
+                <span class="text-[11px] text-text-muted"
+                  >Mã: {{ item.MASACH }}</span
+                >
               </td>
 
               <!-- Độc giả -->
@@ -147,7 +159,9 @@
                 }}</span>
                 <span class="text-[11px] text-text-muted block">
                   Mã: {{ item.MADOCGIA }}
-                  <template v-if="item.DOCGIA_INFO?.DIENTHOAI"> - {{ item.DOCGIA_INFO.DIENTHOAI }}</template>
+                  <template v-if="item.DOCGIA_INFO?.DIENTHOAI">
+                    - {{ item.DOCGIA_INFO.DIENTHOAI }}</template
+                  >
                 </span>
               </td>
 
@@ -166,38 +180,40 @@
 
               <!-- Tiền cọc -->
               <td class="py-3 px-3.5">
-                <template v-if="item.TRANGTHAI === 'Chờ Duyệt' || item.TRANGTHAI === 'Từ Chối'">
+                <template
+                  v-if="
+                    item.TRANGTHAI === 'Chờ Duyệt' ||
+                    item.TRANGTHAI === 'Từ Chối'
+                  "
+                >
                   <span class="text-text-muted">-</span>
                 </template>
                 <template v-else>
-                  <span class="font-bold text-primary">{{ formatCurrency(item.TIENCOC) }}</span>
-                  <span class="block text-[10px] text-text-muted">Đã thu lúc cho mượn</span>
+                  <span>{{ formatCurrency(item.TIENCOC) }}</span>
+                  <span class="block text-[10px] text-text-muted"
+                    >Đã thu lúc cho mượn</span
+                  >
                 </template>
               </td>
 
               <!-- Tiền phạt -->
               <td class="py-3 px-3.5">
-                <div v-if="item.TIENPHAT > 0" class="font-bold text-danger">
-                  {{ formatCurrency(item.TIENPHAT) }}
-                  <span v-if="getLateDays(item) > MAX_LATE_DAYS" class="block text-[10px] text-danger font-normal">
-                    (Tịch thu cọc > 30 ngày)
-                  </span>
-                  <span v-else-if="getLateDays(item) > 0" class="block text-[10px] text-text-muted font-normal">
-                    (Trễ {{ getLateDays(item) }} ngày + hư sách nếu có)
-                  </span>
-                  <span v-else class="block text-[10px] text-warning font-normal">
-                    (Phạt hư sách)
-                  </span>
+                <div v-if="item.TIENPHAT > 0">
+                  <div>{{ formatCurrency(item.TIENPHAT) }}</div>
+                  <div v-if="getLateDays(item) > MAX_LATE_DAYS">
+                    Lý do: Tịch thu cọc &gt; {{ MAX_LATE_DAYS }} ngày
+                  </div>
+                  <div v-else-if="getLateDays(item) > 0">
+                    Lý do: Trễ {{ getLateDays(item) }} ngày + hư sách nếu có
+                  </div>
+                  <div v-else>Lý do: Phạt hư sách</div>
                 </div>
                 <span v-else class="text-text-muted">-</span>
               </td>
 
               <!-- Trạng thái -->
               <td class="py-3 px-3.5">
-                <span
-                  class="px-2 py-0.5 rounded text-[11px] font-bold inline-block"
-                  :class="getStatusClass(item)"
-                >
+                <span>
                   {{ item.TRANGTHAI }}
                 </span>
               </td>
@@ -213,7 +229,10 @@
                     class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition inline-flex items-center gap-1 disabled:opacity-50"
                     title="Duyệt yêu cầu mượn sách này"
                   >
-                    <i v-if="isProcessingId === item._id" class="fa-solid fa-spinner fa-spin"></i>
+                    <i
+                      v-if="isProcessingId === item._id"
+                      class="fa-solid fa-spinner fa-spin"
+                    ></i>
                     <i v-else class="fa-solid fa-check"></i>
                     Duyệt
                   </button>
@@ -232,7 +251,10 @@
 
                 <!-- Nút TRẢ SÁCH cho phiếu Đang Mượn hoặc Trễ Hạn -->
                 <button
-                  v-else-if="item.TRANGTHAI === 'Đang Mượn' || item.TRANGTHAI === 'Trễ Hạn'"
+                  v-else-if="
+                    item.TRANGTHAI === 'Đang Mượn' ||
+                    item.TRANGTHAI === 'Trễ Hạn'
+                  "
                   type="button"
                   @click="openReturnModal(item)"
                   class="px-2.5 py-1.5 rounded-lg bg-primary hover:bg-primary-hover active:bg-primary-active text-btn-text font-bold text-xs shadow-sm transition inline-flex items-center gap-1"
@@ -272,7 +294,10 @@
         <div
           class="mb-4 flex items-center justify-between border-b border-border-subtle pb-3"
         >
-          <h2 id="borrow-form-title" class="font-bold text-base flex items-center gap-2">
+          <h2
+            id="borrow-form-title"
+            class="font-bold text-base flex items-center gap-2"
+          >
             <i class="fa-solid fa-book-bookmark text-primary"></i>
             Lập phiếu mượn trực tiếp tại quầy
           </h2>
@@ -295,23 +320,19 @@
           {{ borrowMessage.text }}
         </p>
 
-        <form
-          @submit.prevent="handleBorrowBook"
-          class="space-y-3.5"
-        >
+        <form @submit.prevent="handleBorrowBook" class="space-y-3.5">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label
                 for="borrow-reader-id"
                 class="mb-1 block text-xs font-bold text-text-label"
               >
-                MÃ ĐỘC GIẢ <span class="text-danger">*</span>
+                MÃ ĐỘC GIẢ
               </label>
               <input
                 id="borrow-reader-id"
                 v-model.trim="borrowForm.MADOCGIA"
                 type="text"
-                placeholder="VD: DG123456"
                 required
                 class="w-full p-2.5 rounded-input border border-border-input bg-bg-input text-xs uppercase outline-none focus:bg-bg-card focus:border-primary"
               />
@@ -322,13 +343,12 @@
                 for="borrow-book-id"
                 class="mb-1 block text-xs font-bold text-text-label"
               >
-                MÃ SÁCH <span class="text-danger">*</span>
+                MÃ SÁCH
               </label>
               <input
                 id="borrow-book-id"
                 v-model.trim="borrowForm.MASACH"
                 type="text"
-                placeholder="VD: S001"
                 required
                 class="w-full p-2.5 rounded-input border border-border-input bg-bg-input text-xs uppercase outline-none focus:bg-bg-card focus:border-primary"
               />
@@ -359,9 +379,7 @@
             </div>
 
             <div>
-              <label
-                class="mb-1 block text-xs font-bold text-text-label"
-              >
+              <label class="mb-1 block text-xs font-bold text-text-label">
                 NGÀY MƯỢN
               </label>
               <input
@@ -373,9 +391,7 @@
             </div>
 
             <div>
-              <label
-                class="mb-1 block text-xs font-bold text-text-label"
-              >
+              <label class="mb-1 block text-xs font-bold text-text-label">
                 HẠN TRẢ
               </label>
               <input
@@ -387,7 +403,9 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-end gap-2 pt-3 border-t border-border-subtle">
+          <div
+            class="flex items-center justify-end gap-2 pt-3 border-t border-border-subtle"
+          >
             <button
               type="button"
               @click="closeBorrowModal"
@@ -419,19 +437,38 @@
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       @click.self="rejectingItem = null"
     >
-      <div class="w-full max-w-md rounded-card bg-bg-card p-6 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-border-subtle">
+      <div
+        class="w-full max-w-md rounded-card bg-bg-card p-6 shadow-2xl space-y-4"
+      >
+        <div
+          class="flex items-center justify-between pb-3 border-b border-border-subtle"
+        >
           <h3 class="font-bold text-base text-danger flex items-center gap-2">
-            <i class="fa-solid fa-ban"></i> Từ Chối Yêu Cầu Mượn Sách
+            Từ Chối Yêu Cầu Mượn Sách
           </h3>
-          <button @click="rejectingItem = null" class="text-text-muted hover:text-text-label">
+          <button
+            @click="rejectingItem = null"
+            class="text-text-muted hover:text-text-label"
+          >
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
 
-        <div class="text-xs space-y-2 bg-bg-page p-3 rounded-lg border border-border-subtle">
-          <p>Sách: <strong>{{ rejectingItem.SACH_INFO?.TENSACH || rejectingItem.MASACH }}</strong></p>
-          <p>Độc giả: <strong>{{ rejectingItem.DOCGIA_INFO?.HOTEN || rejectingItem.MADOCGIA }}</strong></p>
+        <div
+          class="text-xs space-y-2 bg-bg-page p-3 rounded-lg border border-border-subtle"
+        >
+          <p>
+            Sách:
+            <strong>{{
+              rejectingItem.SACH_INFO?.TENSACH || rejectingItem.MASACH
+            }}</strong>
+          </p>
+          <p>
+            Độc giả:
+            <strong>{{
+              rejectingItem.DOCGIA_INFO?.HOTEN || rejectingItem.MADOCGIA
+            }}</strong>
+          </p>
         </div>
 
         <div>
@@ -446,7 +483,9 @@
           ></textarea>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-border-subtle">
+        <div
+          class="flex items-center justify-end gap-2 pt-2 border-t border-border-subtle"
+        >
           <button
             type="button"
             @click="rejectingItem = null"
@@ -460,8 +499,11 @@
             :disabled="isProcessingId === rejectingItem._id"
             class="px-4 py-2 rounded-btn bg-danger text-white text-xs font-bold hover:bg-danger/90 transition flex items-center gap-1.5"
           >
-            <i v-if="isProcessingId === rejectingItem._id" class="fa-solid fa-spinner fa-spin"></i>
-            Xác nhận từ chối
+            <i
+              v-if="isProcessingId === rejectingItem._id"
+              class="fa-solid fa-spinner fa-spin"
+            ></i>
+            Xác nhận
           </button>
         </div>
       </div>
@@ -480,7 +522,8 @@
           class="flex items-center justify-between pb-3 border-b border-border-subtle"
         >
           <h3 class="font-bold text-base flex items-center gap-2">
-            <i class="fa-solid fa-receipt text-primary"></i> Xác Nhận Trả Sách & Tính Phạt
+            <i class="fa-solid fa-receipt text-primary"></i> Xác Nhận Trả Sách &
+            Tính Phạt
           </h3>
           <button
             type="button"
@@ -501,14 +544,18 @@
               <strong>{{
                 returningItem.SACH_INFO?.TENSACH || returningItem.MASACH
               }}</strong>
-              <span class="text-text-muted ml-1">({{ returningItem.MASACH }})</span>
+              <span class="text-text-muted ml-1"
+                >({{ returningItem.MASACH }})</span
+              >
             </p>
             <p>
               Độc giả:
               <strong>{{
                 returningItem.DOCGIA_INFO?.HOTEN || returningItem.MADOCGIA
               }}</strong>
-              <span class="text-text-muted ml-1">({{ returningItem.MADOCGIA }})</span>
+              <span class="text-text-muted ml-1"
+                >({{ returningItem.MADOCGIA }})</span
+              >
             </p>
             <p>
               Hạn trả:
@@ -531,11 +578,14 @@
           >
             <div class="flex items-center gap-2 font-bold text-xs">
               <i class="fa-solid fa-triangle-exclamation"></i>
-              QUÁ HẠN {{ returnSummary.lateDays }} NGÀY (> {{ MAX_LATE_DAYS }} ngày)
+              QUÁ HẠN {{ returnSummary.lateDays }} NGÀY (>
+              {{ MAX_LATE_DAYS }} ngày)
             </div>
             <p>
               QUY ĐỊNH: Tịch thu toàn bộ tiền cọc mượn sách:
-              <strong class="font-bold ml-1">{{ formatCurrency(returnSummary.forfeitedDeposit) }}</strong>
+              <strong class="font-bold ml-1">{{
+                formatCurrency(returnSummary.forfeitedDeposit)
+              }}</strong>
             </p>
           </div>
 
@@ -549,7 +599,9 @@
             </p>
             <p>
               Tiền phạt trễ ({{ FINE_PER_DAY.toLocaleString("vi-VN") }}đ/ngày):
-              <strong class="text-danger ml-1">{{ formatCurrency(returnSummary.lateFine) }}</strong>
+              <strong class="text-danger ml-1">{{
+                formatCurrency(returnSummary.lateFine)
+              }}</strong>
             </p>
           </div>
 
@@ -562,25 +614,37 @@
           </div>
 
           <!-- MỤC KIỂM TRA HƯ HẠI SÁCH -->
-          <div class="p-3.5 rounded-xl border border-border-base bg-bg-card space-y-3">
+          <div
+            class="p-3.5 rounded-xl border border-border-base bg-bg-card space-y-3"
+          >
             <div class="flex items-center justify-between">
-              <label class="flex items-center gap-2 font-bold cursor-pointer text-xs">
+              <label
+                class="flex items-center gap-2 font-bold cursor-pointer text-xs"
+              >
                 <input
                   type="checkbox"
                   v-model="hasBookDamage"
                   class="rounded border-border-input text-warning focus:ring-0 h-4 w-4"
                 />
-                <span :class="hasBookDamage ? 'text-warning' : 'text-text-main'">
+                <span
+                  :class="hasBookDamage ? 'text-warning' : 'text-text-main'"
+                >
                   Sách bị hư hại / rách bìa / mất trang / hỏng sách
                 </span>
               </label>
-              <span v-if="hasBookDamage" class="text-[10px] px-2 py-0.5 rounded bg-warning-bg text-warning font-bold">
+              <span
+                v-if="hasBookDamage"
+                class="text-[10px] px-2 py-0.5 rounded bg-warning-bg text-warning font-bold"
+              >
                 Có phạt hư hại
               </span>
             </div>
 
             <!-- Form nhập phạt hư hại -->
-            <div v-if="hasBookDamage" class="space-y-3 pt-2 border-t border-border-subtle">
+            <div
+              v-if="hasBookDamage"
+              class="space-y-3 pt-2 border-t border-border-subtle"
+            >
               <div>
                 <label class="block text-[11px] font-bold text-text-label mb-1">
                   Số tiền phạt hư hại (VNĐ) <span class="text-danger">*</span>
@@ -594,7 +658,9 @@
                     placeholder="VD: 30000"
                     class="w-full p-2 pl-3 pr-10 rounded-input border border-border-input bg-bg-input text-xs font-bold text-text-main outline-none focus:border-warning"
                   />
-                  <span class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-xs">
+                  <span
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted text-xs"
+                  >
                     đ
                   </span>
                 </div>
@@ -602,7 +668,10 @@
                 <div class="flex flex-wrap gap-1.5 mt-2">
                   <button
                     type="button"
-                    @click="damageFineInput = 20000; damageNoteInput = 'Rách bìa hoặc vẽ bẩn nhẹ'"
+                    @click="
+                      damageFineInput = 20000;
+                      damageNoteInput = 'Rách bìa hoặc vẽ bẩn nhẹ';
+                    "
                     class="px-2 py-0.5 rounded text-[10px] bg-bg-input hover:bg-border-base text-text-muted transition"
                   >
                     Rách nhẹ (20.000đ)
@@ -616,7 +685,9 @@
                   </button>
                   <button
                     type="button"
-                    @click="damageFineInput = Number(returningItem.TIENCOC) || 100000"
+                    @click="
+                      damageFineInput = Number(returningItem.TIENCOC) || 100000
+                    "
                     class="px-2 py-0.5 rounded text-[10px] bg-bg-input hover:bg-border-base text-text-muted transition"
                   >
                     Mất sách (Bằng tiền cọc)
@@ -627,40 +698,67 @@
           </div>
 
           <!-- BẢNG TỔNG KẾT TÀI CHÍNH -->
-          <div class="p-3.5 rounded-xl bg-bg-page border border-border-subtle space-y-2">
-            <p class="font-bold text-xs uppercase tracking-wider text-text-label border-b border-border-subtle pb-1">
+          <div
+            class="p-3.5 rounded-xl bg-bg-page border border-border-subtle space-y-2"
+          >
+            <p
+              class="font-bold text-xs uppercase tracking-wider text-text-label border-b border-border-subtle pb-1"
+            >
               Tổng kết thu - chi quyết toán:
             </p>
             <div class="flex justify-between items-center text-xs">
               <span class="text-text-muted">Tiền cọc ban đầu:</span>
-              <span class="font-semibold">{{ formatCurrency(returningItem.TIENCOC) }}</span>
+              <span class="font-semibold">{{
+                formatCurrency(returningItem.TIENCOC)
+              }}</span>
             </div>
             <div class="flex justify-between items-center text-xs">
               <span class="text-text-muted">Phạt trễ hạn:</span>
-              <span class="font-semibold text-danger">{{ formatCurrency(returnSummary.lateFine) }}</span>
+              <span class="font-semibold text-danger">{{
+                formatCurrency(returnSummary.lateFine)
+              }}</span>
             </div>
-            <div v-if="hasBookDamage" class="flex justify-between items-center text-xs">
+            <div
+              v-if="hasBookDamage"
+              class="flex justify-between items-center text-xs"
+            >
               <span class="text-text-muted">Phạt làm hư hại sách:</span>
-              <span class="font-semibold text-warning">{{ formatCurrency(damageFineInput) }}</span>
+              <span class="font-semibold text-warning">{{
+                formatCurrency(damageFineInput)
+              }}</span>
             </div>
-            <div class="flex justify-between items-center text-xs font-bold border-t border-border-subtle pt-1.5">
+            <div
+              class="flex justify-between items-center text-xs font-bold border-t border-border-subtle pt-1.5"
+            >
               <span>Tổng tiền phạt:</span>
-              <span class="text-danger text-sm">{{ formatCurrency(finalTotalFine) }}</span>
+              <span class="text-danger text-sm">{{
+                formatCurrency(finalTotalFine)
+              }}</span>
             </div>
 
             <!-- Kết luận hoàn cọc / thu thêm -->
             <div class="mt-2 pt-2 border-t border-dashed border-border-base">
-              <div v-if="returnSummary.isConfiscated" class="text-danger font-bold text-xs">
+              <div
+                v-if="returnSummary.isConfiscated"
+                class="text-danger font-bold text-xs"
+              >
                 Tịch thu 100% tiền cọc
                 <template v-if="damageFineInput > 0">
-                  + Độc giả nộp thêm tiền hư hại: {{ formatCurrency(damageFineInput) }}
+                  + Độc giả nộp thêm tiền hư hại:
+                  {{ formatCurrency(damageFineInput) }}
                 </template>
               </div>
-              <div v-else-if="finalRefund > 0" class="text-emerald-600 font-bold text-xs flex justify-between items-center">
+              <div
+                v-else-if="finalRefund > 0"
+                class="text-emerald-600 font-bold text-xs flex justify-between items-center"
+              >
                 <span>Số tiền hoàn trả lại cho bạn đọc:</span>
                 <span class="text-sm">{{ formatCurrency(finalRefund) }}</span>
               </div>
-              <div v-else-if="finalExtraFee > 0" class="text-danger font-bold text-xs flex justify-between items-center">
+              <div
+                v-else-if="finalExtraFee > 0"
+                class="text-danger font-bold text-xs flex justify-between items-center"
+              >
                 <span>Bạn đọc cần đóng thêm:</span>
                 <span class="text-sm">{{ formatCurrency(finalExtraFee) }}</span>
               </div>
@@ -773,30 +871,21 @@ const isOverdue = (item) =>
   startOfDay(item.NGAYHENTRA) < startOfDay(new Date());
 
 const getLateDays = (item) => {
-  if (!item?.NGAYHENTRA) return 0;
-  if (item.TRANGTHAI === "Chờ Duyệt" || item.TRANGTHAI === "Từ Chối") return 0;
+  if (
+    !item?.NGAYHENTRA ||
+    item.TRANGTHAI === "Chờ Duyệt" ||
+    item.TRANGTHAI === "Từ Chối"
+  ) {
+    return 0;
+  }
+
   const endDate = item.NGAYTRA ? new Date(item.NGAYTRA) : new Date();
   const diffMs = startOfDay(endDate) - startOfDay(item.NGAYHENTRA);
   return Math.max(0, Math.ceil(diffMs / MS_PER_DAY));
 };
 
 const getStatusClass = (item) => {
-  switch (item.TRANGTHAI) {
-    case "Chờ Duyệt":
-      return "bg-amber-500/15 text-amber-600 border border-amber-500/30";
-    case "Đang Mượn":
-      return isOverdue(item)
-        ? "bg-red-500/15 text-red-600 border border-red-500/30"
-        : "bg-blue-500/15 text-blue-600 border border-blue-500/30";
-    case "Trễ Hạn":
-      return "bg-red-500/15 text-red-600 border border-red-500/30";
-    case "Đã Trả":
-      return "bg-emerald-500/15 text-emerald-600 border border-emerald-500/30";
-    case "Từ Chối":
-      return "bg-gray-500/15 text-gray-500 border border-gray-500/30";
-    default:
-      return "bg-bg-input text-text-label";
-  }
+  item.TRANGTHAI;
 };
 
 // --- Computed ---
@@ -812,7 +901,8 @@ const TAB_FILTERS = {
   ALL: () => true,
   ChoDuyet: (i) => i.TRANGTHAI === "Chờ Duyệt",
   DangMuon: (i) => i.TRANGTHAI === "Đang Mượn" && !isOverdue(i),
-  TreHan: (i) => (i.TRANGTHAI === "Trễ Hạn" || isOverdue(i)) && i.TRANGTHAI !== "Đã Trả",
+  TreHan: (i) =>
+    (i.TRANGTHAI === "Trễ Hạn" || isOverdue(i)) && i.TRANGTHAI !== "Đã Trả",
   DaTra: (i) => i.TRANGTHAI === "Đã Trả",
   TuChoi: (i) => i.TRANGTHAI === "Từ Chối",
 };
@@ -877,7 +967,9 @@ const returnSummary = computed(() => {
   const deposit = Number(item.TIENCOC) || 0;
   const isConfiscated = lateDays > MAX_LATE_DAYS;
   const lateFine = isConfiscated
-    ? (deposit > 0 ? deposit : 100000)
+    ? deposit > 0
+      ? deposit
+      : 100000
     : lateDays * FINE_PER_DAY;
 
   return {
@@ -890,7 +982,9 @@ const returnSummary = computed(() => {
 
 const finalTotalFine = computed(() => {
   const lateFine = returnSummary.value.lateFine;
-  const damageFine = hasBookDamage.value ? Number(damageFineInput.value) || 0 : 0;
+  const damageFine = hasBookDamage.value
+    ? Number(damageFineInput.value) || 0
+    : 0;
   return lateFine + damageFine;
 });
 
@@ -946,7 +1040,11 @@ const fetchData = async () => {
 
 // Duyệt yêu cầu mượn
 const handleApprove = async (item) => {
-  if (!confirm(`Xác nhận duyệt yêu cầu mượn sách "${item.SACH_INFO?.TENSACH || item.MASACH}" cho bạn đọc ${item.DOCGIA_INFO?.HOTEN || item.MADOCGIA}?`)) {
+  if (
+    !confirm(
+      `Xác nhận duyệt yêu cầu mượn sách "${item.SACH_INFO?.TENSACH || item.MASACH}" cho bạn đọc ${item.DOCGIA_INFO?.HOTEN || item.MADOCGIA}?`,
+    )
+  ) {
     return;
   }
   try {
@@ -969,9 +1067,12 @@ const confirmReject = async () => {
   if (!rejectingItem.value) return;
   try {
     isProcessingId.value = rejectingItem.value._id;
-    const res = await theodoimuonsachService.tuChoiMuon(rejectingItem.value._id, {
-      LYDOTUCHOI: rejectReason.value,
-    });
+    const res = await theodoimuonsachService.tuChoiMuon(
+      rejectingItem.value._id,
+      {
+        LYDOTUCHOI: rejectReason.value,
+      },
+    );
     alert(res.message || "Đã từ chối yêu cầu mượn sách.");
     rejectingItem.value = null;
     await fetchData();
@@ -990,15 +1091,20 @@ const handleBorrowBook = async () => {
 
     const result = await theodoimuonsachService.muonSach({
       MADOCGIA: borrowForm.value.MADOCGIA.toUpperCase(),
-      MASACH: borrowForm.value.MASACH.toUpperCase(),
+      MASACH: borrowForm.value.MASACH,
       SONGAYMUON: borrowForm.value.SONGAYMUON,
     });
 
+    const depositMessage = result.phieu?.TIENCOC
+      ? ` Đã thu tiền cọc: ${formatCurrency(result.phieu.TIENCOC)}.`
+      : "";
+    const stockMessage = Number.isFinite(result.soQuyenConLai)
+      ? ` Số lượng sách còn lại: ${result.soQuyenConLai}.`
+      : "";
+
     borrowMessage.value = {
       type: "success",
-      text: result.message
-        ? `${result.message}${result.phieu?.TIENCOC ? ` Đã thu tiền cọc: ${formatCurrency(result.phieu.TIENCOC)}.` : ""}`
-        : "Lập phiếu mượn sách thành công!",
+      text: `${result.message || "Lập phiếu mượn sách thành công!"}${depositMessage}${stockMessage}`,
     };
     borrowForm.value.MADOCGIA = "";
     borrowForm.value.MASACH = "";
@@ -1020,7 +1126,9 @@ const confirmReturn = async () => {
   try {
     isReturning.value = true;
     const res = await theodoimuonsachService.traSach(returningItem.value._id, {
-      TIENPHATHUHAI: hasBookDamage.value ? Number(damageFineInput.value) || 0 : 0,
+      TIENPHATHUHAI: hasBookDamage.value
+        ? Number(damageFineInput.value) || 0
+        : 0,
     });
     alert(res.message || "Trả sách thành công!");
     returningItem.value = null;

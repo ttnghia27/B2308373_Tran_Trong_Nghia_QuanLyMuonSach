@@ -3,56 +3,44 @@
     class="min-h-screen flex items-center justify-center bg-bg-page px-4 py-12 font-sans select-none"
   >
     <div class="w-full max-w-md">
-      <!-- Logo & Header -->
-      <div class="flex items-center justify-center gap-3.5 mb-8 pb-1">
-        <div
-          class="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-btn p-1.5 shadow-md"
-        >
-          <img
-            src="../assets/images/catbook.png"
-            alt="Logo"
-            class="h-full w-full object-contain"
-          />
-        </div>
-        <h1 class="text-3xl font-bold text-text-main">QUẢN LÝ MƯỢN SÁCH</h1>
-      </div>
-
-      <!-- Login Card -->
       <div
         class="rounded-card border border-border-base bg-bg-card p-8 shadow-card"
       >
+        <!-- Logo & Header -->
+        <div class="flex items-center justify-center gap-3.5 mb-8 pb-2">
+          <div
+            class="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-btn p-1.5 shadow-md"
+          >
+            <img
+              src="../assets/images/catbook.png"
+              alt="Logo"
+              class="h-full w-full object-contain"
+            />
+          </div>
+          <h1 class="text-2xl font-bold text-text-main">QUẢN LÝ MƯỢN SÁCH</h1>
+        </div>
         <!-- Role Tabs -->
         <div
           class="grid grid-cols-2 gap-1.5 p-1 bg-bg-input rounded-input mb-6"
         >
           <button
+            v-for="tab in tabs"
+            :key="tab.value"
             type="button"
-            @click="switchTab('staff')"
-            class="py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5"
+            @click="switchTab(tab.value)"
+            class="py-2 text-xs font-bold rounded-lg transition"
             :class="
-              activeTab === 'staff'
+              activeTab === tab.value
                 ? 'bg-bg-card text-primary shadow-sm'
                 : 'text-text-muted hover:text-text-main'
             "
           >
-            <span>Admin / Nhân Viên</span>
-          </button>
-          <button
-            type="button"
-            @click="switchTab('reader')"
-            class="py-2 text-xs font-bold rounded-lg transition flex items-center justify-center gap-1.5"
-            :class="
-              activeTab === 'reader'
-                ? 'bg-bg-card text-primary shadow-sm'
-                : 'text-text-muted hover:text-text-main'
-            "
-          >
-            <span>Độc Giả</span>
+            {{ tab.label }}
           </button>
         </div>
 
         <form @submit.prevent="handleLogin" class="space-y-4">
-          <!-- Identifier: MSNV or Mã Độc Giả / SĐT -->
+          <!-- Identifier: MSNV or Mã Độc Giả -->
           <div>
             <label
               for="login-id"
@@ -61,18 +49,16 @@
               {{ activeTab === "staff" ? "Mã số nhân viên" : "Mã độc giả" }}
             </label>
             <div class="relative">
-              <span
-                class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-sm"
-              >
-                <i class="fa-solid fa-user"></i>
-              </span>
+              <i
+                class="fa-solid fa-user pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-sm"
+              ></i>
               <input
                 id="login-id"
                 v-model.trim="username"
                 type="text"
                 :placeholder="
                   activeTab === 'staff'
-                    ? 'Nhập mã số nhân viên '
+                    ? 'Nhập mã số nhân viên'
                     : 'Nhập mã độc giả'
                 "
                 required
@@ -91,11 +77,9 @@
               Mật khẩu
             </label>
             <div class="relative">
-              <span
-                class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-sm"
-              >
-                <i class="fa-solid fa-lock"></i>
-              </span>
+              <i
+                class="fa-solid fa-lock pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-sm"
+              ></i>
               <input
                 id="password"
                 v-model="password"
@@ -110,49 +94,42 @@
                 class="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main text-sm transition"
               >
                 <i
-                  :class="
-                    showPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'
-                  "
+                  class="fa-solid"
+                  :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"
                 ></i>
               </button>
             </div>
           </div>
 
           <!-- Error Alert -->
-          <div v-if="errorMessage" class="pt-1">
-            <div
-              class="p-3 rounded-input bg-danger-bg border border-danger-border text-danger text-xs flex items-center gap-2"
-            >
-              <span>{{ errorMessage }}</span>
-            </div>
+          <div
+            v-if="errorMessage"
+            class="p-3 rounded-input bg-danger-bg border border-danger-border text-danger text-xs"
+          >
+            {{ errorMessage }}
           </div>
 
           <!-- Submit Button -->
-          <div class="pt-2">
-            <button
-              type="submit"
-              :disabled="isLoading"
-              class="w-full rounded-btn bg-primary hover:bg-primary-hover active:bg-primary-active py-3 text-base font-bold text-btn-text shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:pointer-events-none"
-            >
-              <i
-                v-if="isLoading"
-                class="fa-solid fa-spinner fa-spin text-base"
-              ></i>
-              <span>Đăng Nhập</span>
-            </button>
-          </div>
+          <button
+            type="submit"
+            :disabled="isLoading"
+            class="!mt-6 w-full rounded-btn bg-primary hover:bg-primary-hover active:bg-primary-active py-3 text-base font-bold text-btn-text shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-60 disabled:pointer-events-none"
+          >
+            <i v-if="isLoading" class="fa-solid fa-spinner fa-spin"></i>
+            Đăng Nhập
+          </button>
         </form>
 
         <!-- Register Link for Readers -->
         <div
           v-if="activeTab === 'reader'"
-          class="mt-6 pt-4 border-t border-border-subtle text-center text-xs text-text-muted"
+          class="mt-6 pt-4 border-t border-border-subtle text-center text-xs"
         >
           <RouterLink
             to="/register"
-            class="font-bold text-primary hover:underline ml-1 inline-flex items-center gap-1"
+            class="font-bold text-primary hover:underline"
           >
-            <span>Đăng Ký</span>
+            Đăng Ký
           </RouterLink>
         </div>
       </div>
@@ -161,15 +138,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter, useRoute, RouterLink } from "vue-router";
+import { ref } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
-const activeTab = ref("staff");
+const tabs = [
+  { label: "Admin / Nhân Viên", value: "staff" },
+  { label: "Độc Giả", value: "reader" },
+];
+
+const isReaderQuery =
+  route.query.tab === "docgia" || route.query.role === "reader";
+const activeTab = ref(isReaderQuery ? "reader" : "staff");
+
 const username = ref("");
 const password = ref("");
 const showPassword = ref(false);
@@ -180,12 +165,6 @@ const switchTab = (tab) => {
   activeTab.value = tab;
   errorMessage.value = "";
 };
-
-onMounted(() => {
-  if (route.query.tab === "docgia" || route.query.role === "reader") {
-    activeTab.value = "reader";
-  }
-});
 
 const handleLogin = async () => {
   if (!username.value || !password.value) {

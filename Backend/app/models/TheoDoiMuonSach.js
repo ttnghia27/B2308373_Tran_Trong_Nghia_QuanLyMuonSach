@@ -15,6 +15,7 @@ const TheoDoiMuonSachSchema = new mongoose.Schema(
       default: "Đang Mượn",
       trim: true,
     },
+    DATRUSOQUYEN: { type: Boolean, default: true },
     TIENCOC: {
       type: Number,
       required: true,

@@ -4,9 +4,7 @@
     <div
       class="pb-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
     >
-      <div class="flex items-center gap-2">
-        <h1 class="text-2xl font-extrabold tracking-tight">Nhân Viên</h1>
-      </div>
+      <h1 class="text-2xl font-extrabold tracking-tight">Nhân Viên</h1>
 
       <button
         type="button"
@@ -14,36 +12,22 @@
         class="px-4 py-2 rounded-btn bg-primary hover:bg-primary-hover text-btn-text text-xs font-bold flex items-center gap-1.5"
       >
         <i class="fa-solid fa-plus"></i>
-        <span>Thêm nhân viên</span>
+        Thêm nhân viên
       </button>
     </div>
 
     <!-- Search -->
-    <form
-      @submit.prevent
-      class="pb-3 flex flex-col sm:flex-row gap-2"
-      role="search"
-    >
-      <div class="relative flex-1">
-        <i
-          class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-xs"
-        ></i>
-        <input
-          v-model.trim="searchKeyword"
-          type="search"
-          placeholder="Tìm theo Mã nhân viên (MSNV), Họ tên, Chức vụ, SĐT..."
-          class="w-full pl-9 pr-4 p-2 rounded-input border border-border-input bg-bg-input text-xs placeholder:text-text-muted focus:bg-bg-card focus:border-primary outline-none"
-        />
-      </div>
-
-      <button
-        type="submit"
-        class="p-2 rounded-btn bg-primary hover:bg-primary-hover text-btn-text text-xs font-bold flex items-center justify-center gap-2"
-      >
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <span>Tìm kiếm</span>
-      </button>
-    </form>
+    <div class="relative pb-3" role="search">
+      <i
+        class="fa-solid fa-magnifying-glass pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-xs"
+      ></i>
+      <input
+        v-model.trim="searchKeyword"
+        type="search"
+        placeholder="Tìm theo Mã nhân viên (MSNV), Họ tên, Chức vụ, SĐT..."
+        class="w-full py-2 pl-9 pr-4 rounded-input border border-border-input bg-bg-input text-xs placeholder:text-text-muted focus:bg-bg-card focus:border-primary outline-none"
+      />
+    </div>
 
     <!-- Table -->
     <div
@@ -52,12 +36,12 @@
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead>
-            <tr class="uppercase font-sans tracking-wider border-b">
+            <tr class="uppercase tracking-wider border-b border-border-base">
               <th class="py-3 px-3.5">Mã Số Nhân Viên</th>
               <th class="py-3 px-3.5">Họ và Tên</th>
               <th class="py-3 px-3.5">Chức Vụ</th>
               <th class="py-3 px-3.5">Địa Chỉ</th>
-              <th class="py-3 px-3.5">Tùy Chỉnh</th>
+              <th class="py-3 px-3.5 text-right">Tùy Chỉnh</th>
             </tr>
           </thead>
 
@@ -69,13 +53,12 @@
             >
               <td class="py-3 px-3.5">{{ nv.MSNV }}</td>
               <td class="py-3 px-3.5">
-                <span class="block font-bold">{{ nv.HOTENNV }}</span>
-                <span class="block"> SĐT: {{ nv.SODIENTHOAI }} </span>
+                <div class="font-bold">{{ nv.HOTENNV }}</div>
+                <div>SĐT: {{ nv.SODIENTHOAI }}</div>
               </td>
               <td class="py-3 px-3.5">
                 {{ nv.CHUCVU || "Nhân Viên" }}
               </td>
-
               <td class="py-3 px-3.5" :title="nv.DIACHI">
                 {{ nv.DIACHI || "Chưa cập nhật địa chỉ" }}
               </td>
@@ -102,7 +85,7 @@
             </tr>
 
             <tr v-if="!filteredList.length">
-              <td colspan="6" class="text-center py-12 text-text-muted">
+              <td colspan="5" class="text-center py-12 text-text-muted">
                 {{
                   isLoading
                     ? "Đang tải dữ liệu..."
@@ -118,6 +101,7 @@
     <!-- Modal -->
     <div
       v-if="modal.show"
+      @click.self="modal.show = false"
       class="fixed inset-0 z-50 flex items-center justify-center bg-text-main/50 p-4 overflow-y-auto"
     >
       <div
@@ -139,9 +123,9 @@
 
         <form @submit.prevent="handleSubmit" class="space-y-3 text-xs">
           <div>
-            <label class="block font-bold text-text-label mb-1"
-              >MÃ SỐ NHÂN VIÊN</label
-            >
+            <label class="block font-bold text-text-label mb-1">
+              MÃ SỐ NHÂN VIÊN
+            </label>
             <input
               v-model.trim="form.MSNV"
               :disabled="modal.isEdit"
@@ -152,14 +136,14 @@
           </div>
 
           <div>
-            <label class="block font-bold text-text-label mb-1"
-              >HỌ VÀ TÊN</label
-            >
+            <label class="block font-bold text-text-label mb-1">
+              HỌ VÀ TÊN
+            </label>
             <input
               v-model.trim="form.HOTENNV"
               type="text"
               required
-              class="w-full rounded-input border border-border-input bg-bg-input px-3 py-2 placeholder:text-text-muted focus:bg-bg-card focus:border-primary outline-none"
+              class="w-full rounded-input border border-border-input bg-bg-input px-3 py-2 focus:bg-bg-card focus:border-primary outline-none"
             />
           </div>
 
@@ -175,7 +159,7 @@
               v-model="form.PASSWORD"
               type="password"
               :required="!modal.isEdit"
-              class="w-full rounded-input border border-border-input bg-bg-input px-3 py-2 placeholder:text-text-muted focus:bg-bg-card focus:border-primary outline-none"
+              class="w-full rounded-input border border-border-input bg-bg-input px-3 py-2 focus:bg-bg-card focus:border-primary outline-none"
             />
           </div>
 
@@ -192,14 +176,14 @@
           </div>
 
           <div>
-            <label class="block font-bold text-text-label mb-1"
-              >SỐ ĐIỆN THOẠI</label
-            >
+            <label class="block font-bold text-text-label mb-1">
+              SỐ ĐIỆN THOẠI
+            </label>
             <input
               v-model.trim="form.SODIENTHOAI"
               type="tel"
               required
-              class="w-full rounded-input border border-border-input bg-bg-input px-3 py-2 placeholder:text-text-muted focus:bg-bg-card focus:border-primary outline-none"
+              class="w-full rounded-input border border-border-input bg-bg-input px-3 py-2 focus:bg-bg-card focus:border-primary outline-none"
             />
           </div>
 
@@ -209,7 +193,7 @@
               v-model.trim="form.DIACHI"
               type="text"
               required
-              class="w-full rounded-input border border-border-input bg-bg-input px-3 py-2 placeholder:text-text-muted focus:bg-bg-card focus:border-primary outline-none"
+              class="w-full rounded-input border border-border-input bg-bg-input px-3 py-2 focus:bg-bg-card focus:border-primary outline-none"
             />
           </div>
 
@@ -225,10 +209,10 @@
             <button
               type="submit"
               :disabled="isSubmitting"
-              class="px-5 py-2 rounded-btn bg-primary hover:bg-primary-hover text-btn-text font-bold flex items-center gap-1.5"
+              class="px-5 py-2 rounded-btn bg-primary hover:bg-primary-hover text-btn-text font-bold flex items-center gap-1.5 disabled:opacity-60 disabled:pointer-events-none"
             >
               <i v-if="isSubmitting" class="fa-solid fa-spinner fa-spin"></i>
-              <span>{{ modal.isEdit ? "Lưu Thay Đổi" : "Tạo Tài Khoản" }}</span>
+              {{ modal.isEdit ? "Lưu Thay Đổi" : "Tạo Tài Khoản" }}
             </button>
           </div>
         </form>
@@ -252,10 +236,11 @@ const defaultForm = {
   MSNV: "",
   HOTENNV: "",
   PASSWORD: "",
-  CHUCVU: "",
+  CHUCVU: "Nhân Viên",
   SODIENTHOAI: "",
   DIACHI: "",
 };
+
 const form = ref({ ...defaultForm });
 const modal = ref({ show: false, isEdit: false, targetId: null });
 
@@ -293,6 +278,7 @@ const handleSubmit = async () => {
   try {
     isSubmitting.value = true;
     const payload = { ...form.value };
+
     if (modal.value.isEdit && !payload.PASSWORD) {
       delete payload.PASSWORD;
     }
@@ -315,8 +301,9 @@ const handleSubmit = async () => {
 };
 
 const handleDelete = async (id) => {
-  if (!confirm("Bạn có chắc chắn muốn xóa nhân viên này khỏi hệ thống?"))
+  if (!confirm("Bạn có chắc chắn muốn xóa nhân viên này khỏi hệ thống?")) {
     return;
+  }
 
   try {
     await nhanvienService.deleteNhanVien(id);
