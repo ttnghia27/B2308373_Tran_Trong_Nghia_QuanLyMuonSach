@@ -1,4 +1,5 @@
 const Sach = require("../models/Sach");
+const TheoDoiMuonSach = require("../models/TheoDoiMuonSach");
 const fs = require("fs").promises;
 const multer = require("multer");
 const path = require("path");
@@ -137,12 +138,23 @@ const updateSach = async (req, res) => {
 
 const deleteSach = async (req, res) => {
   try {
-    const S = await Sach.findByIdAndDelete(req.params.id);
+    const S = await Sach.findById(req.params.id);
 
     if (!S) {
       return res.status(404).json({ message: "Lỗi không tìm thấy sách." });
     }
 
+    const hasOpenLoan = await TheoDoiMuonSach.exists({
+      MASACH: S.MASACH,
+      TRANGTHAI: { $in: ["Chờ Duyệt", "Đang Mượn", "Trễ Hạn"] },
+    });
+    if (hasOpenLoan) {
+      return res.status(409).json({
+        message: "Không thể xóa sách đang có phiếu mượn chờ duyệt hoặc chưa trả.",
+      });
+    }
+
+    await Sach.findByIdAndDelete(req.params.id);
     res.status(200).json({
       message: "Xóa thành công sách.",
     });

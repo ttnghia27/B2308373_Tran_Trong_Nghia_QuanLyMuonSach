@@ -5,7 +5,7 @@
 
   <div v-else class="flex h-screen bg-slate-100 overflow-hidden font-sans">
     <!-- Sidebar trái -->
-    <AdminSidebar />
+    <AdminSidebar v-if="!auth.isDocGia" />
 
     <!-- Khu vực nội dung chính -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -25,8 +25,10 @@ import { computed } from "vue";
 import { useRoute } from "vue-router";
 import AdminSidebar from "@/components/AdminSidebar.vue";
 import Header from "@/components/Header.vue";
+import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
+const auth = useAuthStore();
 
 const isAuthPage = computed(() => {
   return (
