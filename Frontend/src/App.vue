@@ -1,26 +1,34 @@
 <template>
-  <button
-    v-if="auth.isAuthenticated && route.name !== 'Login'"
-    type="button"
-    class="fixed right-4 top-4 z-50 flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-md transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-    @click="handleLogout"
-  >
-    <i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i>
-    Đăng xuất
-  </button>
-  <RouterView />
+  <div v-if="isAuthPage" class="min-h-screen bg-slate-100">
+    <RouterView />
+  </div>
+
+  <div v-else class="flex h-screen bg-slate-100 overflow-hidden font-sans">
+    <!-- Sidebar trái -->
+    <AdminSidebar />
+
+    <!-- Khu vực nội dung chính -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <!-- Top header bar -->
+      <Header />
+
+      <!-- View chính cuộn độc lập -->
+      <main class="flex-1 overflow-y-auto p-6 bg-slate-50">
+        <RouterView />
+      </main>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { useRoute, useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/auth";
+import { computed } from "vue";
+import { useRoute } from "vue-router";
+import AdminSidebar from "@/components/AdminSidebar.vue";
+import Header from "@/components/Header.vue";
 
 const route = useRoute();
-const router = useRouter();
-const auth = useAuthStore();
 
-const handleLogout = async () => {
-  auth.logout();
-  await router.replace({ name: "Login" });
-};
+const isAuthPage = computed(() => {
+  return route.name === "Login" || route.name === "NotFound";
+});
 </script>

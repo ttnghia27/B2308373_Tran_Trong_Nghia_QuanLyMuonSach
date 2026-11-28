@@ -6,7 +6,7 @@ class TheoDoiMuonSachService {
     this.baseUrl = baseUrl;
   }
 
-  async getSachTreHan(params) {
+  async getSachTreHan(params = {}) {
     return (await this.api.get(`${this.baseUrl}/tre-han`, { params })).data;
   }
 
@@ -19,8 +19,8 @@ class TheoDoiMuonSachService {
     return (await this.api.put(`${this.baseUrl}/${id}/tra`, data)).data;
   }
 
-  async getAllTheoDoiMuonSach() {
-    return (await this.api.get(this.baseUrl)).data;
+  async getAllTheoDoiMuonSach(params = {}) {
+    return (await this.api.get(this.baseUrl, { params })).data;
   }
 
   async getTheoDoiMuonSachById(id) {

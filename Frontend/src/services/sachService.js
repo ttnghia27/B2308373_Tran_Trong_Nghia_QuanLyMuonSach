@@ -6,8 +6,8 @@ class SachService {
     this.baseUrl = baseUrl;
   }
 
-  async getAllSach() {
-    return (await this.api.get(this.baseUrl)).data;
+  async getAllSach(params = {}) {
+    return (await this.api.get(this.baseUrl, { params })).data;
   }
 
   async getSachById(id) {
@@ -15,11 +15,19 @@ class SachService {
   }
 
   async createSach(data) {
-    return (await this.api.post(this.baseUrl, data)).data;
+    return (
+      await this.api.post(this.baseUrl, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+    ).data;
   }
 
   async updateSach(id, data) {
-    return (await this.api.put(`${this.baseUrl}/${id}`, data)).data;
+    return (
+      await this.api.put(`${this.baseUrl}/${id}`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+    ).data;
   }
 
   async deleteSach(id) {

@@ -9,7 +9,6 @@ const DocGiaSchema = new mongoose.Schema(
     PHAI: { type: String, required: true, enum: ["Nam", "Nữ"], trim: true },
     DIACHI: { type: String, required: true, trim: true },
     DIENTHOAI: { type: String, required: true, maxlength: 10, trim: true },
-    TRANGTHAI: { type: Boolean, required: true, default: true },
   },
   {
     collection: "DOCGIA",

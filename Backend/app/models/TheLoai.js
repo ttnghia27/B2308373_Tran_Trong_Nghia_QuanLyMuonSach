@@ -4,7 +4,6 @@ const TheLoaiSchema = new mongoose.Schema(
   {
     MATL: { type: String, required: true, unique: true, trim: true },
     TENTL: { type: String, required: true, trim: true },
-    MOTATL: { type: String, required: false, trim: true },
   },
   {
     collection: "THELOAI",

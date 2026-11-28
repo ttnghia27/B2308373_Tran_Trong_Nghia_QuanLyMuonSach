@@ -7,6 +7,7 @@ const {
   updateSach,
   deleteSach,
   deleteAllSach,
+  uploadCover,
 } = require("../controllers/sachController");
 const {
   authenticate,
@@ -17,8 +18,8 @@ router.use(authenticate);
 router.use(authorizeAdminOrStaff);
 router.get("/", getAllSach);
 router.get("/:id", getSachById);
-router.post("/", createSach);
-router.put("/:id", updateSach);
+router.post("/", uploadCover, createSach);
+router.put("/:id", uploadCover, updateSach);
 router.delete("/:id", deleteSach);
 router.delete("/", deleteAllSach);
 module.exports = router;

@@ -1,6 +1,7 @@
 import { createWebHistory, createRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
-import Dashboard from "@/views/Dashboard.vue";
+
+import AdminDashboard from "@/views/Dashboard.vue"; // Admin Dashboard
 import DocGia from "@/views/DocGia.vue";
 import Login from "@/views/Login.vue";
 import NhanVien from "@/views/NhanVien.vue";
@@ -14,8 +15,23 @@ const routes = [
   {
     path: "/",
     name: "Home",
-    component: Dashboard,
-    meta: { requiresAuth: true },
+    redirect: () => {
+      const auth = useAuthStore();
+      if (!auth.isAuthenticated) return { name: "Login" };
+      return auth.isAdmin
+        ? { name: "AdminDashboard" }
+        : { name: "TheoDoiMuonSach" };
+    },
+  },
+  {
+    path: "/admin",
+    name: "AdminDashboard",
+    component: AdminDashboard,
+    meta: { requiresAuth: true, requiresAdmin: true },
+  },
+  {
+    path: "/staff",
+    redirect: { name: "TheoDoiMuonSach" },
   },
   {
     path: "/sach",
@@ -33,7 +49,7 @@ const routes = [
     path: "/nhanvien",
     name: "NhanVien",
     component: NhanVien,
-    meta: { requiresAuth: true, requiresAdmin: true },
+    meta: { requiresAuth: true, requiresAdmin: true }, // Chỉ Admin mới được vào
   },
   {
     path: "/nhaxuatban",
@@ -70,12 +86,8 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
   scrollBehavior(to, from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition;
-    }
-    if (to.hash) {
-      return { el: to.hash, behavior: "smooth" };
-    }
+    if (savedPosition) return savedPosition;
+    if (to.hash) return { el: to.hash, behavior: "smooth" };
     return { top: 0 };
   },
 });
@@ -92,6 +104,7 @@ router.beforeEach(async (to) => {
     }
   }
 
+  // 1. Chưa đăng nhập mà vào route yêu cầu Auth
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return {
       name: "Login",
@@ -99,12 +112,16 @@ router.beforeEach(async (to) => {
     };
   }
 
-  if (to.meta.requiresAdmin && !auth.isAdmin) {
-    return { name: "Home" };
+  // 2. Đã đăng nhập nhưng cố vào trang Login
+  if (to.name === "Login" && auth.isAuthenticated) {
+    return auth.isAdmin
+      ? { name: "AdminDashboard" }
+      : { name: "TheoDoiMuonSach" };
   }
 
-  if (to.name === "Login" && auth.isAuthenticated) {
-    return { name: "Home" };
+  // 3. Nhân viên cố vào route chỉ dành riêng cho Admin
+  if (to.meta.requiresAdmin && !auth.isAdmin) {
+    return { name: "TheoDoiMuonSach" };
   }
 
   return true;
